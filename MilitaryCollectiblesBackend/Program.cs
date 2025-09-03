@@ -1,4 +1,7 @@
 
+using Microsoft.EntityFrameworkCore;
+using MilitaryCollectiblesBackend.Data;
+
 namespace MilitaryCollectiblesBackend;
 
 public class Program
@@ -9,6 +12,11 @@ public class Program
         builder.AddServiceDefaults();
 
         // Add services to the container.
+        builder.Services.AddDbContext<MilitaryCollectiblesDbContext>(options =>
+        {
+            options.UseSqlServer(builder.Configuration.
+                GetConnectionString("DefaultConnection"));
+        });
 
         builder.Services.AddControllers();
         // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
