@@ -24,7 +24,7 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
         Task<List<MechanicalEquipment>> GetMechanicalEquipmentsByStorageArea(int storageAreaId);
         Task UpdateAssignMechanicalEquipmentToStorageArea(int mechanicalEquipmentId, int storageAreaId);
     }
-    public class MechanicalEquipmentDataAccess
+    public class MechanicalEquipmentDataAccess : IMechanicalEquipmentDataAccess
     {
         private readonly MilitaryCollectiblesDbContext _dbContext;
 
