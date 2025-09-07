@@ -33,21 +33,20 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
     {
         private readonly MilitaryCollectiblesDbContext _dbContext;
 
-        public LiteraturesDataAccess(MilitaryCollectiblesDbContext dbContext)
-        {
+        public LiteraturesDataAccess(MilitaryCollectiblesDbContext dbContext){
             _dbContext = dbContext;
         }
 
-        public async Task<Literature?> GetLiterature(int id)
-        {
+        public async Task<Literature?> GetLiterature(int id){
             var literature = await _dbContext.Literatures.FindAsync(id);
             if (literature == null)
+            {
                 throw new KeyNotFoundException($"Literature with ID {id} not found.");
+            }
             return literature;
         }
 
-        public async Task<List<Literature>> GetAllLiteratures(int pageNumber, int pageSize)
-        {
+        public async Task<List<Literature>> GetAllLiteratures(int pageNumber, int pageSize){
             var literatures = await _dbContext.Literatures
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
@@ -55,14 +54,12 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
             return literatures;
         }
 
-        public async Task<Literature> CreateLiterature(Literature literature)
-        {
-            var exists = await _dbContext.Literatures
-                .AnyAsync(l => l.Title == literature.Title);
+        public async Task<Literature> CreateLiterature(Literature literature){
+            var exists = await _dbContext.Literatures.AnyAsync(l => l.Title == literature.Title);
 
             if (exists)
             {
-                throw new Exception("A literature record with this title already exists.");
+                throw new Exception($"A literature record with the title {literature.Title} already exists.");
             }
             try
             {
@@ -75,12 +72,10 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
             }
         }
 
-        public async Task<Literature> UpdateLiterature(int id, Literature literature)
-        {
-            var exists = await _dbContext.Literatures
-                .AnyAsync(l => l.Id == id);
+        public async Task<Literature> UpdateLiterature(int id, Literature literature){
+            var existingLiterature = await _dbContext.Literatures.FindAsync(id);
 
-            if (!exists)
+            if (existingLiterature == null)
             {
                 throw new KeyNotFoundException($"Literature with ID {id} not found.");
             }
@@ -88,7 +83,7 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
             try
             {
                 literature.Id = id; // Ensure the ID remains unchanged
-                _dbContext.Literatures.Update(literature); // does not need async coz modifies the tracked entity state 
+                _dbContext.Entry(existingLiterature).CurrentValues.SetValues(literature); // does not need async coz modifies the tracked entity state 
                 await _dbContext.SaveChangesAsync();
                 return literature;
             }
@@ -98,8 +93,7 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
             }
         }
 
-        public async Task DeleteLiterature(int id)
-        {
+        public async Task DeleteLiterature(int id){
             var exists = await _dbContext.Literatures
                 .AnyAsync(l => l.Id == id);
 
@@ -122,8 +116,7 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
             }
         }
 
-        public async Task<List<Literature>> GetLiteratureByPriceRange(decimal minPrice, decimal maxPrice)
-        {
+        public async Task<List<Literature>> GetLiteratureByPriceRange(decimal minPrice, decimal maxPrice){
             try
             {
                 if (minPrice < 0 || maxPrice < 0)
@@ -147,12 +140,18 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
                 return results;
             } catch (Exception ex)
             {
-                throw new Exception("An error occurred while retrieving literatures by price range.", ex);
+                if (ex is ArgumentException)
+                {
+                    throw;
+                }
+                else
+                {
+                    throw new Exception("An error occurred while retrieving literatures by price range.", ex);
+                }
             }
         }
 
-        public async Task<List<Literature>> GetLiteratureByAuthor(string author)
-        {
+        public async Task<List<Literature>> GetLiteratureByAuthor(string author){
             try
             {
                 var results = await _dbContext.Literatures
@@ -172,8 +171,7 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
             }
         }
 
-        public async Task<List<Literature>> GetLiteratureByPublicationYear(int publicationYear)
-        {
+        public async Task<List<Literature>> GetLiteratureByPublicationYear(int publicationYear){
             try
             {
                 var results = await _dbContext.Literatures
@@ -192,8 +190,7 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
             }
         }
 
-        public async Task<List<Literature>> GetLiteratureByPublicationYearRange(int startYear, int endYear)
-        {
+        public async Task<List<Literature>> GetLiteratureByPublicationYearRange(int startYear, int endYear){
             try
             {
                 if (startYear > endYear)
@@ -217,12 +214,18 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
                 return results;
             } catch(Exception ex)
             {
-                throw new Exception("An error occurred while retrieving literatures by publication year range.", ex);
+                if (ex is ArgumentException)
+                {
+                    throw;
+                }
+                else
+                {
+                    throw new Exception("An error occurred while retrieving literatures by publication year range.", ex);
+                }
             }
         }
 
-        public async Task<List<Literature>> GetLiteratureByPublisher(string publisher)
-        {
+        public async Task<List<Literature>> GetLiteratureByPublisher(string publisher){
             try
             {
                 var results = await _dbContext.Literatures
@@ -241,8 +244,7 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
             }
         }
 
-        public async Task<List<Literature>> GetLiteratureByISBN(string isbn)
-        {
+        public async Task<List<Literature>> GetLiteratureByISBN(string isbn){
             try
             {
                 var results = await _dbContext.Literatures
@@ -262,8 +264,7 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
 
         }
 
-        public async Task<List<Literature>> GetLiteratureByLiteratureType(string literatureType)
-        {
+        public async Task<List<Literature>> GetLiteratureByLiteratureType(string literatureType){
             try
             {
                 var results = await _dbContext.Literatures
@@ -282,8 +283,7 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
             }
         }
 
-        public async Task<List<Literature>> GetLiteratureByBindingType(string bindingType)
-        {
+        public async Task<List<Literature>> GetLiteratureByBindingType(string bindingType){
             try
             {
                 var results = await _dbContext.Literatures
@@ -302,8 +302,7 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
             }
         }
 
-        public async Task<List<Literature>> GetAllSeriesLiteratures(int seriesId)
-        {
+        public async Task<List<Literature>> GetAllSeriesLiteratures(int seriesId){
             try
             {
                 var results = await _dbContext.Literatures
@@ -322,8 +321,7 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
             }
         }
 
-        public async Task<List<Literature>> GetLiteraturesByStorageArea(int storageAreaId)
-        {
+        public async Task<List<Literature>> GetLiteraturesByStorageArea(int storageAreaId){
             try
             {
                 var results = await _dbContext.Literatures
@@ -342,8 +340,7 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
             }
         }
 
-        public async Task UpdateAssignLiteratureToLiteratureSeries(int literatureId, int seriesId)
-        {
+        public async Task UpdateAssignLiteratureToLiteratureSeries(int literatureId, int seriesId){
             var literature = await _dbContext.Literatures.FindAsync(literatureId);
             if (literature == null)
             {
@@ -360,8 +357,7 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
             }
         }
 
-        public async Task UpdateAssignLiteratureToStorageArea(int literatureId, int storageAreaId)
-        {
+        public async Task UpdateAssignLiteratureToStorageArea(int literatureId, int storageAreaId){
             var literature = await _dbContext.Literatures.FindAsync(literatureId);
             if (literature == null)
             {
