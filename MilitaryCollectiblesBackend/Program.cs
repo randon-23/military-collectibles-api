@@ -1,6 +1,7 @@
 
 using Microsoft.EntityFrameworkCore;
 using MilitaryCollectiblesBackend.Data;
+using MilitaryCollectiblesBackend.DataAccessLayer;
 
 namespace MilitaryCollectiblesBackend;
 
@@ -19,6 +20,7 @@ public class Program
         });
 
         builder.Services.AddControllers();
+        builder.Services.AddDataAccessLayerServices();
         // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();

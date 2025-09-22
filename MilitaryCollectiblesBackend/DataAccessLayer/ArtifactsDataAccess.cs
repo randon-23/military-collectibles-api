@@ -11,6 +11,7 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
         Task<List<Artifact>> GetAllArtifacts(int pageNumber, int pageSize); // This for supporting indexing and collection operations, guarantees a list    
         Task <Artifact> CreateArtifact(Artifact artifact);
         Task <Artifact> UpdateArtifact(int id, Artifact artifact);
+        Task UpdatePhotoUrl(int artifactId, string photoUrl);
         Task DeleteArtifact(int id);
         //Task <List><Artifact> GetArtifactByAvailability - would this be useful?
         Task<List<Artifact>> GetArtifactByPriceRange(decimal minPrice, decimal maxPrice);
@@ -82,6 +83,17 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
             catch (DbUpdateException dbEx) {
                 throw new Exception("An error occurred while updating the artifact.", dbEx);
             }
+        }
+
+        public async Task UpdatePhotoUrl(int artifactId, string photoUrl)
+        {
+            var artifact = await _dbContext.Artifacts.FindAsync(artifactId);
+            if (artifact == null)
+            {
+                throw new KeyNotFoundException($"Artifact with ID {artifactId} not found.");
+            }
+            artifact.PhotoUrl = photoUrl;
+            await _dbContext.SaveChangesAsync();
         }
         public async Task DeleteArtifact(int id) {
             var exists = await _dbContext.Artifacts.AnyAsync(a => a.Id == id);

@@ -11,6 +11,7 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
         Task<List<Insignia>> GetAllInsignias(int pageNumber, int pageSize); // This for supporting indexing and collection operations, guarantees a list
         Task<Insignia> CreateInsignia(Insignia insignia);
         Task<Insignia> UpdateInsignia(int id, Insignia insignia);
+        Task UpdatePhotoUrl(int insigniaId, string photoUrl);
         Task DeleteInsignia(int id);
 
         //Task <List><Insignia> GetInsigniaByAvailability - would this be useful?
@@ -88,6 +89,17 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
             {
                 throw new Exception("An error occurred while updating the insignia.", dbEx);
             }
+        }
+
+        public async Task UpdatePhotoUrl(int insigniaId, string photoUrl)
+        {
+            var insignia = await _dbContext.Insignias.FindAsync(insigniaId);
+            if (insignia == null)
+            {
+                throw new KeyNotFoundException($"Insignia with ID {insigniaId} not found.");
+            }
+            insignia.PhotoUrl = photoUrl;
+            await _dbContext.SaveChangesAsync();
         }
 
         public async Task DeleteInsignia(int id){

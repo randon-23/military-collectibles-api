@@ -12,6 +12,7 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
         Task<List<Literature>> GetAllLiteratures(int pageNumber, int pageSize); // This for supporting indexing and collection operations, guarantees a list
         Task<Literature> CreateLiterature(Literature literature);
         Task<Literature> UpdateLiterature(int id, Literature literature);
+        Task UpdatePhotoUrl(int literatureId, string photoUrl);
         Task DeleteLiterature(int id);
 
         //Task <List><Literature> GetLiteratureByAvailability - would this be useful?
@@ -39,10 +40,6 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
 
         public async Task<Literature?> GetLiterature(int id){
             var literature = await _dbContext.Literatures.FindAsync(id);
-            if (literature == null)
-            {
-                throw new KeyNotFoundException($"Literature with ID {id} not found.");
-            }
             return literature;
         }
 
@@ -56,20 +53,14 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
 
         public async Task<Literature> CreateLiterature(Literature literature){
             var exists = await _dbContext.Literatures.AnyAsync(l => l.Title == literature.Title);
-
             if (exists)
             {
-                throw new Exception($"A literature record with the title {literature.Title} already exists.");
+                throw new InvalidOperationException($"A literature record with the title {literature.Title} already exists.");
             }
-            try
-            {
-                await _dbContext.Literatures.AddAsync(literature); //Async coz involves I/O operation
-                await _dbContext.SaveChangesAsync();
-                return literature;
-            } catch (DbUpdateException dbEx)
-            {
-                throw new Exception("An error occurred while adding the literature to the database.", dbEx);
-            }
+
+            await _dbContext.Literatures.AddAsync(literature); //Async coz involves I/O operation
+            await _dbContext.SaveChangesAsync();
+            return literature;
         }
 
         public async Task<Literature> UpdateLiterature(int id, Literature literature){
@@ -77,98 +68,56 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
 
             if (existingLiterature == null)
             {
-                throw new KeyNotFoundException($"Literature with ID {id} not found.");
+                throw new InvalidOperationException($"Literature with ID {id} not found.");
             }
 
-            try
+            literature.Id = id; // Ensure the ID remains unchanged
+            _dbContext.Entry(existingLiterature).CurrentValues.SetValues(literature); // does not need async coz modifies the tracked entity state 
+            await _dbContext.SaveChangesAsync();
+            return literature;
+            
+        }
+
+        public async Task UpdatePhotoUrl(int literatureId, string photoUrl)
+        {
+            var literature = await _dbContext.Literatures.FindAsync(literatureId);
+            if(literature == null)
             {
-                literature.Id = id; // Ensure the ID remains unchanged
-                _dbContext.Entry(existingLiterature).CurrentValues.SetValues(literature); // does not need async coz modifies the tracked entity state 
-                await _dbContext.SaveChangesAsync();
-                return literature;
+                throw new KeyNotFoundException($"Literature with ID {literatureId} not found.");
             }
-            catch (DbUpdateException dbEx)
-            {
-                throw new Exception("An error occurred while updating the literature in the database.", dbEx);
-            }
+            literature.PhotoUrl = photoUrl;
+            await _dbContext.SaveChangesAsync();
         }
 
         public async Task DeleteLiterature(int id){
-            var exists = await _dbContext.Literatures
-                .AnyAsync(l => l.Id == id);
+            var exists = await _dbContext.Literatures.AnyAsync(l => l.Id == id);
 
             if (!exists)
             {
-                throw new KeyNotFoundException($"Literature with ID {id} not found.");
+                throw new InvalidOperationException($"Literature with ID {id} not found.");
             }
-
-            try
-            {
-                await _dbContext.Literatures
-                    .Where(l => l.Id == id)
-                    .ExecuteDeleteAsync(); // EF Core 7.0+ feature for direct delete without loading entity
-                await _dbContext.SaveChangesAsync();
-                return;
-            }
-            catch (DbUpdateException dbEx)
-            {
-                throw new Exception("An error occurred while deleting the literature from the database.", dbEx);
-            }
+            
+            await _dbContext.Literatures
+                .Where(l => l.Id == id)
+                .ExecuteDeleteAsync(); // EF Core 7.0+ feature for direct delete without loading entity
+            await _dbContext.SaveChangesAsync();
+            return;
         }
 
         public async Task<List<Literature>> GetLiteratureByPriceRange(decimal minPrice, decimal maxPrice){
-            try
-            {
-                if (minPrice < 0 || maxPrice < 0)
-                {
-                    throw new ArgumentException("Price values must be non-negative.");
-                }
-                if (minPrice > maxPrice)
-                {
-                    throw new ArgumentException("Minimum price cannot be greater than maximum price.");
-                }
+            var results = await _dbContext.Literatures
+                .Where(l => l.Price >= minPrice && l.Price <= maxPrice)
+                .ToListAsync();
 
-                var results = await _dbContext.Literatures
-                    .Where(l => l.Price >= minPrice && l.Price <= maxPrice)
-                    .ToListAsync();
-
-                if(results.Count == 0 || results == null)
-                {
-                    return new List<Literature>();
-                }
-
-                return results;
-            } catch (Exception ex)
-            {
-                if (ex is ArgumentException)
-                {
-                    throw;
-                }
-                else
-                {
-                    throw new Exception("An error occurred while retrieving literatures by price range.", ex);
-                }
-            }
+            return results; 
         }
 
         public async Task<List<Literature>> GetLiteratureByAuthor(string author){
-            try
-            {
-                var results = await _dbContext.Literatures
-                    .Where(l => l.Author != null && l.Author.ToLower() == author.ToLower())
-                    .ToListAsync();
+            var results = await _dbContext.Literatures
+                .Where(l => l.Author != null && l.Author.ToLower() == author.ToLower())
+                .ToListAsync();
 
-                if (results.Count == 0 || results == null)
-                {
-                    return new List<Literature>();
-                }
-
-                return results;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("An error occurred while retrieving literatures by author.", ex);
-            }
+            return results;
         }
 
         public async Task<List<Literature>> GetLiteratureByPublicationYear(int publicationYear){
@@ -191,38 +140,11 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
         }
 
         public async Task<List<Literature>> GetLiteratureByPublicationYearRange(int startYear, int endYear){
-            try
-            {
-                if (startYear > endYear)
-                {
-                    throw new ArgumentException("Start year cannot be greater than end year.");
-                }
-                if(startYear < 0 || endYear < 0)
-                {
-                    throw new ArgumentException("Year values must be non-negative.");
-                }
+            var results = await _dbContext.Literatures
+                .Where(l => l.PublicationYear >= startYear && l.PublicationYear <= endYear)
+                .ToListAsync();
 
-                var results = await _dbContext.Literatures
-                    .Where(l => l.PublicationYear >= startYear && l.PublicationYear <= endYear)
-                    .ToListAsync();
-
-                if (results.Count == 0 || results == null)
-                {
-                    return new List<Literature>();
-                }
-
-                return results;
-            } catch(Exception ex)
-            {
-                if (ex is ArgumentException)
-                {
-                    throw;
-                }
-                else
-                {
-                    throw new Exception("An error occurred while retrieving literatures by publication year range.", ex);
-                }
-            }
+            return results;
         }
 
         public async Task<List<Literature>> GetLiteratureByPublisher(string publisher){

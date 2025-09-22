@@ -11,6 +11,7 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
         Task<List<Equipment>> GetAllEquipments(int pageNumber, int pageSize); // This for supporting indexing and collection operations, guarantees a list
         Task<Equipment> CreateEquipment(Equipment equipment);
         Task<Equipment> UpdateEquipment(int id, Equipment equipment);
+        Task UpdatePhotoUrl(int equipmentId, string photoUrl);
         Task DeleteEquipment(int id);
         //Task <List><Equipment> GetEquipmentByAvailability - would this be useful?
         Task<List<Equipment>> GetEquipmentByPriceRange(decimal minPrice, decimal maxPrice);
@@ -82,6 +83,17 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
             {
                 throw new Exception("An error occurred while updating the equipment.", dbEx);
             }
+        }
+
+        public async Task UpdatePhotoUrl(int equipmentId, string photoUrl)
+        {
+            var equipment = await _dbContext.Equipments.FindAsync(equipmentId);
+            if (equipment == null)
+            {
+                throw new KeyNotFoundException($"Equipment with ID {equipmentId} not found.");
+            }
+            equipment.PhotoUrl = photoUrl;
+            await _dbContext.SaveChangesAsync();
         }
 
         public async Task DeleteEquipment(int id){

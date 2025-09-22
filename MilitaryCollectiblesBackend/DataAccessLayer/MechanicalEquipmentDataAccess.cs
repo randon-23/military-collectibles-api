@@ -11,6 +11,7 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
         Task<List<MechanicalEquipment>> GetAllMechanicalEquipments(int pageNumber, int pageSize); // This for supporting indexing and collection operations, guarantees a list
         Task<MechanicalEquipment> CreateMechanicalEquipment(MechanicalEquipment mechanicalEquipment);
         Task<MechanicalEquipment> UpdateMechanicalEquipment(int id, MechanicalEquipment mechanicalEquipment);
+        Task UpdatePhotoUrl(int mechanicalEquipmentId, string photoUrl);
         Task DeleteMechanicalEquipment(int id);
         //Task <List><MechanicalEquipment> GetMechanicalEquipmentByAvailability - would this be useful?
         Task<List<MechanicalEquipment>> GetMechanicalEquipmentByPriceRange(decimal minPrice, decimal maxPrice);
@@ -33,7 +34,7 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
             _dbContext = dbContext;
         }
 
-        public async Task<MechanicalEquipment?> GetMEchanicalEquipment(int id)
+        public async Task<MechanicalEquipment?> GetMechanicalEquipment(int id)
         {
             var mechanicalEquipment = await _dbContext.MechanicalEquipments.FindAsync(id);
             if(mechanicalEquipment == null)
@@ -91,6 +92,17 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
             {
                 throw new Exception("An error occurred while updating the mechanical equipment in the database.", dbEx);
             }
+        }
+
+        public async Task UpdatePhotoUrl(int mechanicalEquipmentId, string photoUrl)
+        {
+            var mechanicalEquipment = await _dbContext.MechanicalEquipments.FindAsync(mechanicalEquipmentId);
+            if (mechanicalEquipment == null)
+            {
+                throw new KeyNotFoundException($"MechanicalEquipment with ID {mechanicalEquipmentId} not found.");
+            }
+            mechanicalEquipment.PhotoUrl = photoUrl;
+            await _dbContext.SaveChangesAsync();
         }
 
         public async Task DeleteMechanicalEquipment(int id)
@@ -271,7 +283,7 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
             }
         }
 
-        public async Task<List<MechanicalEquipment>> GetEquipmentByMaterial(string material)
+        public async Task<List<MechanicalEquipment>> GetMechanicalEquipmentByMaterial(string material)
         {
             try
             {
