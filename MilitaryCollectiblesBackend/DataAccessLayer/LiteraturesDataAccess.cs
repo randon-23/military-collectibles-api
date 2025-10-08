@@ -127,10 +127,6 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
                     .Where(l => l.PublicationYear == publicationYear)
                     .ToListAsync();
 
-                if (results.Count == 0 || results == null)
-                {
-                    return new List<Literature>();
-                }
                 return results;
             }
             catch (Exception ex)
@@ -148,42 +144,19 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
         }
 
         public async Task<List<Literature>> GetLiteratureByPublisher(string publisher){
-            try
-            {
-                var results = await _dbContext.Literatures
-                    .Where(l => l.Publisher != null && l.Publisher.ToLower() == publisher.ToLower())
-                    .ToListAsync();
+            var results = await _dbContext.Literatures
+                .Where(l => l.Publisher != null && l.Publisher.ToLower() == publisher.ToLower())
+                .ToListAsync();
 
-                if (results.Count == 0 || results == null)
-                {
-                    return new List<Literature>();
-                }
-
-                return results;
-            } catch (Exception ex)
-            {
-                throw new Exception("An error occurred while retrieving literatures by publisher.", ex);
-            }
+            return results;
         }
 
         public async Task<List<Literature>> GetLiteratureByISBN(string isbn){
-            try
-            {
-                var results = await _dbContext.Literatures
-                    .Where(l => l.ISBN != null && l.ISBN.ToLower() == isbn.ToLower())
-                    .ToListAsync();
+            var results = await _dbContext.Literatures
+                .Where(l => l.ISBN != null && l.ISBN.ToLower() == isbn.ToLower())
+                .ToListAsync();
 
-                if (results.Count == 0 || results == null)
-                {
-                    return new List<Literature>();
-                }
-
-                return results;
-            } catch(Exception ex)
-            {
-                throw new Exception("An error occurred while retrieving literatures by ISBN.", ex);
-            }
-
+            return results;
         }
 
         public async Task<List<Literature>> GetLiteratureByLiteratureType(string literatureType){

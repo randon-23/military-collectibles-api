@@ -1,8 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
+using MilitaryCollectiblesBackend.CustomClasses;
 using MilitaryCollectiblesBackend.DataAccessLayer;
 using MilitaryCollectiblesBackend.Models;
-using MilitaryCollectiblesBackend.CustomClasses;
+using System.Text.RegularExpressions;
 
 namespace MilitaryCollectiblesBackend.Controllers
 {
@@ -250,6 +251,49 @@ namespace MilitaryCollectiblesBackend.Controllers
                 return Ok(literatures);
             }
             catch (Exception ex)
+            {
+                return StatusCode(500, $"An unexpected error occurred: {ex.Message}");
+            }
+        }
+
+        [HttpGet("get-literature-by-publisher/{publisher}")]
+        public async Task<ActionResult<List<Literature>>> GetLiteratureByPublisher(string publisher)
+        {
+            try
+            {
+                var literatures = await _literaturesDataAccess.GetLiteratureByPublisher(publisher);
+                if (literatures == null || literatures.Count == 0)
+                {
+                    return NotFound($"No literatures found by publisher: {publisher}");
+                }
+
+                return Ok(literatures);
+            } catch(Exception ex)
+            {
+                return StatusCode(500, $"An unexpected error occurred: {ex.Message}");
+            }
+        }
+
+        [HttpGet("get-literature-by-isbn/{isbn}")]
+        public async Task<ActionResult<List<Literature>>> GetLiteratureByISBN(string isbn)
+        {
+            try
+            {
+                string isbnPattern = @"^(97(8|9))?\d{9}(\d|X)$";
+                var cleanedIsbn = isbn.Replace("-", "").Replace(" ", "");
+                if (!Regex.IsMatch(cleanedIsbn, isbnPattern, RegexOptions.IgnoreCase))
+                {
+                    return BadRequest("Invalid ISBN format. Provide a valid ISBN-10 or ISBN-13.");
+                }
+
+                var literatures = await _literaturesDataAccess.GetLiteratureByISBN(isbn);
+                if(literatures == null || literatures.Count == 0)
+                {
+                    return NotFound($"No litreatures found by ISBN: {isbn}");
+                }
+
+                return Ok(literatures);
+            } catch(Exception ex)
             {
                 return StatusCode(500, $"An unexpected error occurred: {ex.Message}");
             }
