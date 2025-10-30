@@ -37,10 +37,6 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
 
         public async Task<Insignia?> GetInsignia(int id){
             var insignia = await _dbContext.Insignias.FindAsync(id);
-            if(insignia == null)
-            {
-                throw new KeyNotFoundException($"Insignia with ID {id} not found.");
-            }
             return insignia;
         }
 
@@ -58,17 +54,12 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
 
             if (exists)
             {
-                throw new Exception($"Insignia with name {insignia.Name} already exists.");
+                throw new InvalidOperationException($"Insignia with name {insignia.Name} already exists.");
             }
-            try
-            {
-                await _dbContext.Insignias.AddAsync(insignia);
-                await _dbContext.SaveChangesAsync();
-                return insignia;
-            } catch (DbUpdateException dbEx)
-            {
-                throw new Exception("An error occurred while creating the insignia.", dbEx);
-            }
+            
+            await _dbContext.Insignias.AddAsync(insignia);
+            await _dbContext.SaveChangesAsync();
+            return insignia;
         }
 
         public async Task<Insignia> UpdateInsignia(int id, Insignia insignia){
@@ -76,27 +67,22 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
 
             if (existingInsignia == null)
             {
-                throw new KeyNotFoundException($"Insignia with ID {id} not found.");
+                throw new InvalidOperationException($"Insignia with ID {id} not found.");
             }
 
-            try
-            {
-                insignia.Id = id; // Ensure the ID remains unchanged
-                _dbContext.Entry(existingInsignia).CurrentValues.SetValues(insignia);
-                await _dbContext.SaveChangesAsync();
-                return existingInsignia;
-            } catch(DbUpdateException dbEx)
-            {
-                throw new Exception("An error occurred while updating the insignia.", dbEx);
-            }
+            insignia.Id = id; // Ensure the ID remains unchanged
+            _dbContext.Entry(existingInsignia).CurrentValues.SetValues(insignia);
+            await _dbContext.SaveChangesAsync();
+            return existingInsignia;
         }
 
+        //Handled by utilities controller after file upload
         public async Task UpdatePhotoUrl(int insigniaId, string photoUrl)
         {
             var insignia = await _dbContext.Insignias.FindAsync(insigniaId);
             if (insignia == null)
             {
-                throw new KeyNotFoundException($"Insignia with ID {insigniaId} not found.");
+                throw new InvalidOperationException($"Insignia with ID {insigniaId} not found.");
             }
             insignia.PhotoUrl = photoUrl;
             await _dbContext.SaveChangesAsync();
@@ -107,207 +93,112 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
 
             if (!exists)
             {
-                throw new KeyNotFoundException($"Insignia with ID {id} not found.");
+                throw new InvalidOperationException($"Insignia with ID {id} not found.");
             }
 
-            try
-            {
-                await _dbContext.Insignias.Where(i => i.Id == id).ExecuteDeleteAsync();
-                await _dbContext.SaveChangesAsync();
-                return;
-            } catch (DbUpdateException dbEx)
-            {
-                throw new Exception("An error occurred while deleting the insignia.", dbEx);
-            }
+            await _dbContext.Insignias.Where(i => i.Id == id).ExecuteDeleteAsync();
+            await _dbContext.SaveChangesAsync();
+            return;            
         }
 
         public async Task<List<Insignia>> GetInsigniaByPriceRange(decimal minPrice, decimal maxPrice){
-            try
-            {
-                if(minPrice < 0 || maxPrice < 0)
-                {
-                    throw new ArgumentException("Price values must be non-negative.");
-                }
-                if(minPrice > maxPrice)
-                {
-                    throw new ArgumentException("Minimum price cannot be greater than maximum price.");
-                }
-
                 var results = await _dbContext.Insignias
                     .Where(i => i.Price >= minPrice && i.Price <= maxPrice)
                     .ToListAsync();
-
-                if(results.Count == 0 || results == null)
-                {
-                    return new List<Insignia>();
-                }
-
                 return results;
-            } catch(Exception ex)
-            {
-                if (ex is ArgumentException)
-                {
-                    throw;
-                }
-                else
-                {
-                    throw new Exception("An error occurred while retrieving insignias by price range.", ex);
-                }
-            }
         }
 
         public async Task<List<Insignia>> GetInsigniaByInsigniaType(string insigniaType){
-            try
-            {
-                var results = await _dbContext.Insignias
-                    .Where(i => i.InsigniaType.ToLower() == insigniaType.ToLower())
-                    .ToListAsync();
+            var results = await _dbContext.Insignias
+                .Where(i => i.InsigniaType.ToLower() == insigniaType.ToLower())
+                .ToListAsync();
 
-                if (results.Count == 0 || results == null)
-                {
-                    return new List<Insignia>();
-                }
-                return results;
-            } catch(Exception ex)
-            {
-                throw new Exception("An error occurred while retrieving insignias by insignia type.", ex);
-            }
+            return results;
         }
 
         public async Task<List<Insignia>> GetInsigniaByOrigin(string origin)
         {
-            try
-            {
-                var results = await _dbContext.Insignias
-                    .Where(i => i.Origin != null && i.Origin.ToLower() == origin.ToLower())
-                    .ToListAsync();
+            var results = await _dbContext.Insignias
+                .Where(i => i.Origin != null && i.Origin.ToLower() == origin.ToLower())
+                .ToListAsync();
 
-                if (results.Count == 0 || results == null)
-                {
-                    return new List<Insignia>();
-                }
-
-                return results;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("An error occurred while retrieving insignias by origin.", ex);
-            }
+            return results;
         }
 
         public async Task<List<Insignia>> GetInsigniaByEra(string era)
         {
-            try
-            {
-                var results = await _dbContext.Insignias
-                    .Where(i => i.Era != null && i.Era.ToLower() == era.ToLower())
-                    .ToListAsync();
+            var results = await _dbContext.Insignias
+                .Where(i => i.Era != null && i.Era.ToLower() == era.ToLower())
+                .ToListAsync();
 
-                if (results.Count == 0 || results == null)
-                {
-                    return new List<Insignia>();
-                }
-
-                return results;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("An error occurred while retrieving artifacts by origin.", ex);
-            }
+            return results;
         }
 
         public async Task<List<Insignia>> GetInsigniaByMaterial(string material)
         {
-            try
-            {
-                var results = await _dbContext.Insignias
-                    .Where(i => i.Material != null && i.Material.ToLower() == material.ToLower())
-                    .ToListAsync();
+            var results = await _dbContext.Insignias
+                .Where(i => i.Material != null && i.Material.ToLower() == material.ToLower())
+                .ToListAsync();
 
-                if (results.Count == 0 || results == null)
-                {
-                    return new List<Insignia>();
-                }
-
-                return results;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("An error occurred while retrieving insignias by material.", ex);
-            }
+            return results;
         }
 
-        public async Task<List<Insignia>> GetInsigniaByPartOfSet(bool partOfSet){
-            try
-            {
-                var results = await _dbContext.Insignias
-                    .Where(i => i.PartOfSet == partOfSet)
-                    .ToListAsync();
+        public async Task<List<Insignia>> GetInsigniaByPartOfSet(bool partOfSet)
+        {    
+            var results = await _dbContext.Insignias
+                .Where(i => i.PartOfSet == partOfSet)
+                .ToListAsync();
 
-                if (results.Count == 0 || results == null)
-                {
-                    return new List<Insignia>();
-                }
-
-                return results;
-            } catch(Exception ex)
-            {
-                throw new Exception("An error occurred while retrieving insignias by part of set.", ex);
-            }
+            return results;
         }
 
-        public async Task<List<Insignia>> GetAllSeriesInsignias(int seriesId){
-            try
-            {
-                var results = await _dbContext.Insignias
-                    .Where(i => i.SeriesId == seriesId)
-                    .ToListAsync();
+        public async Task<List<Insignia>> GetAllSeriesInsignias(int seriesId)
+        {
+            var exists = await _dbContext.QueriedInsigniaSeries.AnyAsync(s => s.SeriesId == seriesId);
 
-                if(results.Count == 0 || results == null)
-                {
-                    return new List<Insignia>();
-                }
-
-                return results;
-            } catch(Exception ex)
+            if (!exists)
             {
-                throw new Exception("An error occurred while retrieving insignias by series ID.", ex);
+                throw new InvalidOperationException($"Insignia series with ID {seriesId} not found.");
             }
+
+            var results = await _dbContext.Insignias
+                .Where(i => i.SeriesId == seriesId)
+                .ToListAsync();
+
+            return results;
         }
 
-        public async Task<List<Insignia>> GetInsigniasByStorageArea(int storageAreaId){
-            try
+        public async Task<List<Insignia>> GetInsigniasByStorageArea(int storageAreaId)
+        {
+            var exists = await _dbContext.StorageAreas.AnyAsync(s => s.Id == storageAreaId);
+
+            if (!exists)
             {
-                var results = await _dbContext.Insignias
-                    .Where(i => i.StorageArea == storageAreaId)
-                    .ToListAsync();
-
-                if (results.Count == 0 || results == null)
-                {
-                    return new List<Insignia>();
-                }
-
-                return results;
-            } catch (Exception ex){
-                throw new Exception("An error occurred while retrieving insignias by storage area ID.", ex);
+                throw new InvalidOperationException($"Storage area with ID {storageAreaId} not found.");
             }
+
+            var results = await _dbContext.Insignias
+                .Where(i => i.StorageArea == storageAreaId)
+                .ToListAsync();
+
+            return results;            
         }
 
         public async Task UpdateAssignInsigniaToInsigniaSeries(int insigniaId, int seriesId){
             var insignia = await _dbContext.Insignias.FindAsync(insigniaId);
             if (insignia == null)
             {
-                throw new KeyNotFoundException($"Insignia with ID {insigniaId} not found.");
+                throw new InvalidOperationException($"Insignia with ID {insigniaId} not found.");
+            }
+            var seriesExists = await _dbContext.QueriedInsigniaSeries.AnyAsync(s => s.SeriesId == seriesId);
+            if (!seriesExists)
+            {
+                throw new InvalidOperationException($"Insignia series with ID {seriesId} not found.");
             }
 
-            try
-            {
-                insignia.SeriesId = seriesId;
-                await _dbContext.SaveChangesAsync();
-            } catch(DbUpdateException dbEx)
-            {
-                throw new Exception("An error occurred while assigning the insignia to the series.", dbEx);
-            }
+            insignia.SeriesId = seriesId;
+            await _dbContext.SaveChangesAsync();
+            return;
         }
 
         public async Task UpdateAssignInsigniaToStorageArea(int insigniaId, int storageAreaId)
@@ -315,17 +206,18 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
             var insignia = await _dbContext.Insignias.FindAsync(insigniaId);
             if (insignia == null)
             {
-                throw new KeyNotFoundException($"Insignia with ID {insigniaId} not found.");
+                throw new InvalidOperationException($"Insignia with ID {insigniaId} not found.");
             }
-            try
+
+            var storageAreaExists = await _dbContext.StorageAreas.AnyAsync(s => s.Id == storageAreaId);
+            if (!storageAreaExists)
             {
-                insignia.StorageArea = storageAreaId;
-                await _dbContext.SaveChangesAsync();
+                throw new InvalidOperationException($"Storage area with ID {storageAreaId} not found.");
             }
-            catch (DbUpdateException dbEx)
-            {
-                throw new Exception("An error occurred while assigning the insignia to the storage area.", dbEx);
-            }
+
+            insignia.StorageArea = storageAreaId;
+            await _dbContext.SaveChangesAsync();
+            return;
         }
     }
 }

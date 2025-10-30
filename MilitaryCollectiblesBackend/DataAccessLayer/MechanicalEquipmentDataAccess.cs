@@ -37,10 +37,6 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
         public async Task<MechanicalEquipment?> GetMechanicalEquipment(int id)
         {
             var mechanicalEquipment = await _dbContext.MechanicalEquipments.FindAsync(id);
-            if(mechanicalEquipment == null)
-            {
-                throw new KeyNotFoundException($"Mechanical Equipment with ID {id} not found.");
-            }
             return mechanicalEquipment;
         }
 
@@ -58,48 +54,36 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
             var exists = await _dbContext.MechanicalEquipments.AnyAsync(me => me.Name == mechanicalEquipment.Name);
             if (exists)
             {
-                throw new Exception($"Mechanical Equipment with name {mechanicalEquipment.Name} already exists.");
+                throw new InvalidOperationException($"Mechanical Equipment with name {mechanicalEquipment.Name} already exists.");
             }
 
-            try
-            {
-                await _dbContext.MechanicalEquipments.AddAsync(mechanicalEquipment);
-                await _dbContext.SaveChangesAsync();
-                return mechanicalEquipment;
-            }
-            catch (DbUpdateException dbEx)
-            {
-                throw new Exception("An error occurred while adding the mechanical equipment to the database.", dbEx);
-            }
+            await _dbContext.MechanicalEquipments.AddAsync(mechanicalEquipment);
+            await _dbContext.SaveChangesAsync();
+            return mechanicalEquipment;
         }
 
         public async Task<MechanicalEquipment> UpdateMechanicalEquipment(int id, MechanicalEquipment mechanicalEquipment)
         {
             var existingMechanicalEquipment = await _dbContext.MechanicalEquipments.FindAsync(id);
+
             if (existingMechanicalEquipment == null)
             {
-                throw new KeyNotFoundException($"Mechanical Equipment with ID {id} not found.");
+                throw new InvalidOperationException($"Mechanical Equipment with ID {id} not found.");
             }
-
-            try
-            {
-                mechanicalEquipment.Id = id; // Ensure the ID remains unchanged
-                _dbContext.Entry(existingMechanicalEquipment).CurrentValues.SetValues(mechanicalEquipment);
-                await _dbContext.SaveChangesAsync();
-                return mechanicalEquipment;
-            }
-            catch (DbUpdateException dbEx)
-            {
-                throw new Exception("An error occurred while updating the mechanical equipment in the database.", dbEx);
-            }
+           
+            mechanicalEquipment.Id = id; // Ensure the ID remains unchanged
+            _dbContext.Entry(existingMechanicalEquipment).CurrentValues.SetValues(mechanicalEquipment);
+            await _dbContext.SaveChangesAsync();
+            return mechanicalEquipment;
         }
 
+        //Handled by utilities controller after file upload
         public async Task UpdatePhotoUrl(int mechanicalEquipmentId, string photoUrl)
         {
             var mechanicalEquipment = await _dbContext.MechanicalEquipments.FindAsync(mechanicalEquipmentId);
             if (mechanicalEquipment == null)
             {
-                throw new KeyNotFoundException($"MechanicalEquipment with ID {mechanicalEquipmentId} not found.");
+                throw new InvalidOperationException($"MechanicalEquipment with ID {mechanicalEquipmentId} not found.");
             }
             mechanicalEquipment.PhotoUrl = photoUrl;
             await _dbContext.SaveChangesAsync();
@@ -111,236 +95,137 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
 
             if (!exists)
             {
-                throw new KeyNotFoundException($"Mechanical Equipment with ID {id} not found.");
+                throw new InvalidOperationException($"Mechanical Equipment with ID {id} not found.");
             }
-
-            try
-            {
-                await _dbContext.MechanicalEquipments.Where(me => me.Id == id).ExecuteDeleteAsync();
-                await _dbContext.SaveChangesAsync();
-                return;
-            } catch(DbUpdateException dbEx)
-            {
-                throw new Exception("An error occurred while deleting the mechanical equipment from the database.", dbEx);
-            }
+            
+            await _dbContext.MechanicalEquipments.Where(me => me.Id == id).ExecuteDeleteAsync();
+            await _dbContext.SaveChangesAsync();
+            return;
         }
 
-        public async Task<List<MechanicalEquipment>> GetMechanicalEquipmentByPriceRange(decimal minPrice, decimal maxPrice)
-        {
-            try
-            {
-                if(minPrice < 0 || maxPrice < 0)
-                {
-                    throw new ArgumentException("Price values must be non-negative.");
-                }
-                if(minPrice > maxPrice)
-                {
-                    throw new ArgumentException("Minimum price cannot be greater than maximum price.");
-                }
-
-                var results = await _dbContext.MechanicalEquipments
-                    .Where(me => me.Price >= minPrice && me.Price <= maxPrice)
-                    .ToListAsync();
-
-                if(results.Count == 0 || results == null)
-                {
-                    return new List<MechanicalEquipment>();
-                }
-
-                return results;
-            } catch(Exception ex)
-            {
-                if(ex is ArgumentException)
-                {
-                    throw;
-                }
-                else
-                {
-                    throw new Exception("An error occurred while retrieving mechanical equipment by price range.", ex);
-                }
-            }
+        public async Task<List<MechanicalEquipment>> GetMechanicalEquipmentByPriceRange(decimal minPrice, decimal maxPrice){
+            var results = await _dbContext.MechanicalEquipments
+                .Where(me => me.Price >= minPrice && me.Price <= maxPrice)
+                .ToListAsync();
+                
+            return results;
         }
 
         public async Task<List<MechanicalEquipment>> GetMechanicalEquipmentByType(string mechanicalEquipmentType)
         {
-            try
-            {
-                var results = await _dbContext.MechanicalEquipments
-                    .Where(me => me.MechanicalEquipmentType.ToLower() == mechanicalEquipmentType.ToLower())
-                    .ToListAsync();
+            var results = await _dbContext.MechanicalEquipments
+            .Where(me => me.MechanicalEquipmentType.ToLower() == mechanicalEquipmentType.ToLower())
+            .ToListAsync();
 
-                if(results.Count == 0 || results == null)
-                {
-                    return new List<MechanicalEquipment>();
-                }
-
-                return results;
-            } catch(Exception ex)
-            {
-                throw new Exception("An error occurred while retrieving mechanical equipment by type.", ex);
-            }
+            return results;
         }
 
-        public async Task<List<MechanicalEquipment>> GetMechanicalEquipmentByCaliberSpec(string caliberSpec)
-        {
-            try
-            {
-                var results = await _dbContext.MechanicalEquipments
-                    .Where(me => me.CaliberSpec != null && me.CaliberSpec.ToLower() == caliberSpec.ToLower())
-                    .ToListAsync();
+        public async Task<List<MechanicalEquipment>> GetMechanicalEquipmentByCaliberSpec(string caliberSpec){
+            var exactMatch = await _dbContext.MechanicalEquipments
+                .Where(me => me.CaliberSpec != null && me.CaliberSpec.ToLower() == caliberSpec.ToLower())
+                .ToListAsync();
 
-                if(results.Count == 0 || results == null)
-                {
-                    return new List<MechanicalEquipment>();
-                }
-
-                return results;
-            } catch(Exception ex)
-            {
-                throw new Exception("An error occurred while retrieving mechanical equipment by caliber spec.", ex);
+            if(exactMatch.Count > 0)
+            { 
+                return exactMatch;
             }
+
+            var similarMatches = await _dbContext.MechanicalEquipments
+                .Where(me => me.CaliberSpec != null && me.CaliberSpec.ToLower().Contains(caliberSpec.ToLower()))
+                .ToListAsync();
+
+            return similarMatches;
         }
 
-        public async Task<List<MechanicalEquipment>> GetMechanicalEquipmentByVehicleModel(string vehicleModel)
-        {
-            try
-            {
-                var results = await _dbContext.MechanicalEquipments
-                    .Where(me => me.VehicleModel != null && me.VehicleModel.ToLower() == vehicleModel.ToLower())
-                    .ToListAsync();
+        public async Task<List<MechanicalEquipment>> GetMechanicalEquipmentByVehicleModel(string vehicleModel){
+            var exactMatch = await _dbContext.MechanicalEquipments
+                .Where(me => me.VehicleModel != null && me.VehicleModel.ToLower() == vehicleModel.ToLower())
+                .ToListAsync();
 
-                if(results.Count == 0 || results == null)
-                {
-                    return new List<MechanicalEquipment>();
-                }
-
-                return results;
-            } catch(Exception ex)
+            if(exactMatch.Count > 0)
             {
-                throw new Exception("An error occurred while retrieving mechanical equipment by vehicle model.", ex);
+                return exactMatch;
             }
+
+            var similarMatches = await _dbContext.MechanicalEquipments
+                .Where(me => me.VehicleModel != null && me.VehicleModel.ToLower().Contains(vehicleModel.ToLower()))
+                .ToListAsync();
+
+            return similarMatches;
         }
 
-        public async Task<List<MechanicalEquipment>> GetMechanicalEquipmentByManufacturer(string manufacturer)
-        {
-            try
-            {
-                var results = await _dbContext.MechanicalEquipments
-                    .Where(me => me.Manufacturer != null && me.Manufacturer.ToLower() == manufacturer.ToLower())
-                    .ToListAsync();
+        public async Task<List<MechanicalEquipment>> GetMechanicalEquipmentByManufacturer(string manufacturer){
+            var exactMatches = await _dbContext.MechanicalEquipments
+                .Where(me => me.Manufacturer != null && me.Manufacturer.ToLower() == manufacturer.ToLower())
+                .ToListAsync();
 
-                if(results.Count == 0 || results == null)
-                {
-                    return new List<MechanicalEquipment>();
-                }
-
-                return results;
-            } catch(Exception ex)
+            if(exactMatches.Count > 0)
             {
-                throw new Exception("An error occurred while retrieving mechanical equipment by manufacturer.", ex);
+                return exactMatches;
             }
+
+            var similarMatches = await _dbContext.MechanicalEquipments
+                .Where(me => me.Manufacturer != null && me.Manufacturer.Contains(manufacturer.ToLower()))
+                .ToListAsync();
+
+            return similarMatches;
         }
 
-        public async Task<List<MechanicalEquipment>> GetMechanicalEquipmentByOrigin(string origin)
-        {
-            try
-            {
-                var results = await _dbContext.MechanicalEquipments
-                    .Where(me => me.Origin != null && me.Origin.ToLower() == origin.ToLower())
-                    .ToListAsync();
+        public async Task<List<MechanicalEquipment>> GetMechanicalEquipmentByOrigin(string origin){
+            var results = await _dbContext.MechanicalEquipments
+                .Where(me => me.Origin != null && me.Origin.ToLower() == origin.ToLower())
+                .ToListAsync();
 
-                if (results.Count == 0 || results == null)
-                {
-                    return new List<MechanicalEquipment>();
-                }
-
-                return results;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("An error occurred while retrieving mechaincal equipment by origin.", ex);
-            }
+            return results;
         }
 
-        public async Task<List<MechanicalEquipment>> GetMechanicalEquipmentByEra(string era)
-        {
-            try
-            {
-                var results = await _dbContext.MechanicalEquipments
-                    .Where(me => me.Era != null && me.Era.ToLower() == era.ToLower())
-                    .ToListAsync();
+        public async Task<List<MechanicalEquipment>> GetMechanicalEquipmentByEra(string era){ 
+            var results = await _dbContext.MechanicalEquipments
+                .Where(me => me.Era != null && me.Era.ToLower() == era.ToLower())
+                .ToListAsync();
 
-                if (results.Count == 0 || results == null)
-                {
-                    return new List<MechanicalEquipment>();
-                }
-
-                return results;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("An error occurred while retrieving mechanical equipment by origin.", ex);
-            }
+            return results;
         }
 
-        public async Task<List<MechanicalEquipment>> GetMechanicalEquipmentByMaterial(string material)
-        {
-            try
-            {
-                var results = await _dbContext.MechanicalEquipments
-                    .Where(me => me.Material != null && me.Material.ToLower() == material.ToLower())
-                    .ToListAsync();
+        public async Task<List<MechanicalEquipment>> GetMechanicalEquipmentByMaterial(string material){
+            var results = await _dbContext.MechanicalEquipments
+                .Where(me => me.Material != null && me.Material.ToLower() == material.ToLower())
+                .ToListAsync();
 
-                if (results.Count == 0 || results == null)
-                {
-                    return new List<MechanicalEquipment>();
-                }
-
-                return results;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("An error occurred while retrieving mechanical equipment by material.", ex);
-            }
+            return results;
         }
 
-        public async Task<List<MechanicalEquipment>> GetMechanicalEquipmentsByStorageArea(int storageAreaId)
-        {
-            try
+        public async Task<List<MechanicalEquipment>> GetMechanicalEquipmentsByStorageArea(int storageAreaId){
+            var exists = await _dbContext.StorageAreas.AnyAsync(sa => sa.Id == storageAreaId);
+            if (!exists)
             {
-                var results = await _dbContext.MechanicalEquipments
-                    .Where(me => me.StorageArea == storageAreaId)
-                    .ToListAsync();
-
-                if (results.Count == 0 || results == null)
-                {
-                    return new List<MechanicalEquipment>();
-                }
-
-                return results;
+                throw new InvalidOperationException($"Storage area with ID {storageAreaId} not found.");
             }
-            catch (Exception ex)
-            {
-                throw new Exception("An error occurred while retrieving mechanical equipments by storage area ID.", ex);
-            }
+
+            var results = await _dbContext.MechanicalEquipments
+                .Where(me => me.StorageArea == storageAreaId)
+                .ToListAsync();
+
+            return results;            
         }
 
         public async Task UpdateAssignMechanicalEquipmentToStorageArea(int mechanicalEquipmentId, int storageAreaId)
         {
             var mechanicalEquipment = await _dbContext.MechanicalEquipments.FindAsync(mechanicalEquipmentId);
             if (mechanicalEquipment == null)
-            {
-                throw new KeyNotFoundException($"Insignia with ID {mechanicalEquipmentId} not found.");
+            {   
+                throw new InvalidOperationException($"Mechanical equipment with ID {mechanicalEquipmentId} not found.");
             }
-            try
+
+            var storageAreaExists = await _dbContext.StorageAreas.AnyAsync(sa => sa.Id == storageAreaId);
+            if (!storageAreaExists)
             {
-                mechanicalEquipment.StorageArea = storageAreaId;
-                await _dbContext.SaveChangesAsync();
+                throw new InvalidOperationException($"Storage area with ID {storageAreaId} not found.");
             }
-            catch (DbUpdateException dbEx)
-            {
-                throw new Exception("An error occurred while assigning the mechanical equipment to the storage area.", dbEx);
-            }
+            
+            mechanicalEquipment.StorageArea = storageAreaId;
+            await _dbContext.SaveChangesAsync();
+            return;
         }
     }
 }

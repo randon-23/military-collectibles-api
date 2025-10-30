@@ -24,10 +24,6 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
         public async Task<ArtifactSeries?> GetArtifactSeries(int id)
         {
             var artifactSeries = await _dbContext.QueriedArtifactSeries.FindAsync(id);
-            if(artifactSeries == null)
-            {
-                throw new KeyNotFoundException($"ArtifactSeries with ID {id} not found.");
-            }
             return artifactSeries;
         }
 
@@ -46,18 +42,12 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
                 .AnyAsync(ase => ase.SeriesName == artifactSeries.SeriesName);
             if (exists)
             {
-                throw new Exception($"ArtifactSeries with name '{artifactSeries.SeriesName}' already exists.");
+                throw new InvalidOperationException($"ArtifactSeries with name '{artifactSeries.SeriesName}' already exists.");
             }
-            try
-            {
-                await _dbContext.QueriedArtifactSeries.AddAsync(artifactSeries);
-                await _dbContext.SaveChangesAsync();
-                return artifactSeries;
-            }
-            catch (DbUpdateException ex)
-            {
-                throw new Exception("An error occurred while creating the ArtifactSeries.", ex);
-            }
+
+            await _dbContext.QueriedArtifactSeries.AddAsync(artifactSeries);
+            await _dbContext.SaveChangesAsync();
+            return artifactSeries;
         }
 
         public async Task<ArtifactSeries> UpdateArtifactSeries(int id, ArtifactSeries artifactSeries)
@@ -65,20 +55,13 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
             var existingSeries = await _dbContext.QueriedArtifactSeries.FindAsync(id);
             if (existingSeries == null)
             {
-                throw new KeyNotFoundException($"ArtifactSeries with ID {id} not found.");
+                throw new InvalidOperationException($"ArtifactSeries with ID {id} not found.");
             }
 
-            try
-            {
-                artifactSeries.SeriesId = id; // Ensure the ID remains unchanged
-                _dbContext.Entry(existingSeries).CurrentValues.SetValues(artifactSeries);
-                await _dbContext.SaveChangesAsync();
-                return existingSeries;
-            }
-            catch (DbUpdateException ex)
-            {
-                throw new Exception("An error occurred while updating the ArtifactSeries.", ex);
-            }
+            artifactSeries.SeriesId = id; // Ensure the ID remains unchanged
+            _dbContext.Entry(existingSeries).CurrentValues.SetValues(artifactSeries);
+            await _dbContext.SaveChangesAsync();
+            return existingSeries;
         }
 
         public async Task DeleteArtifactSeries(int id)
@@ -87,21 +70,14 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
 
             if (!exists)
             {
-                throw new KeyNotFoundException($"ArtifactSeries with ID {id} not found.");
+                throw new InvalidOperationException($"ArtifactSeries with ID {id} not found.");
             }
-
-            try
-            {
-                await _dbContext.QueriedArtifactSeries
-                    .Where(ase => ase.SeriesId == id)
-                    .ExecuteDeleteAsync();
-                await _dbContext.SaveChangesAsync();
-                return;
-            }
-            catch (DbUpdateException ex)
-            {
-                throw new Exception("An error occurred while deleting the ArtifactSeries.", ex);
-            }
+                        
+            await _dbContext.QueriedArtifactSeries
+                .Where(ase => ase.SeriesId == id)
+                .ExecuteDeleteAsync();
+            await _dbContext.SaveChangesAsync();
+            return;
         }
     }
 }

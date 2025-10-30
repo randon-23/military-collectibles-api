@@ -34,10 +34,6 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
 
         public async Task<Artifact?> GetArtifact(int id){
             var artifact = await _dbContext.Artifacts.FindAsync(id);
-            if(artifact == null)
-            {
-                throw new KeyNotFoundException($"Artifact with ID {id} not found.");
-            }
             return artifact;
         }
         public async Task<List<Artifact>> GetAllArtifacts(int pageNumber, int pageSize) {
@@ -53,44 +49,34 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
 
             if (exists)
             {
-                throw new Exception($"An artifact with this name already exists.");
+                throw new InvalidOperationException($"An artifact with this name already exists.");
             }
-            try
-            {
-                await _dbContext.Artifacts.AddAsync(artifact);
-                await _dbContext.SaveChangesAsync();
-                return artifact;
-            } catch (DbUpdateException dbEx)
-            {
-                throw new Exception("An error occurred while creating the artifact.", dbEx);
-            }
+
+            await _dbContext.Artifacts.AddAsync(artifact);
+            await _dbContext.SaveChangesAsync();
+            return artifact;
         }
         public async Task<Artifact> UpdateArtifact(int id, Artifact artifact) {
             var existingArtifact = await _dbContext.Artifacts.FindAsync(id);
 
             if (existingArtifact == null)
             {
-                throw new KeyNotFoundException($"Artifact with ID {id} not found.");
+                throw new InvalidOperationException($"Artifact with ID {id} not found.");
             }
 
-            try
-            {
-                artifact.Id = id;
-                _dbContext.Entry(existingArtifact).CurrentValues.SetValues(artifact);
-                await _dbContext.SaveChangesAsync();
-                return artifact;
-            }
-            catch (DbUpdateException dbEx) {
-                throw new Exception("An error occurred while updating the artifact.", dbEx);
-            }
+            artifact.Id = id;
+            _dbContext.Entry(existingArtifact).CurrentValues.SetValues(artifact);
+            await _dbContext.SaveChangesAsync();
+            return existingArtifact;
         }
 
+        //Handled by utilities controller after file upload
         public async Task UpdatePhotoUrl(int artifactId, string photoUrl)
         {
             var artifact = await _dbContext.Artifacts.FindAsync(artifactId);
             if (artifact == null)
             {
-                throw new KeyNotFoundException($"Artifact with ID {artifactId} not found.");
+                throw new InvalidOperationException($"Artifact with ID {artifactId} not found.");
             }
             artifact.PhotoUrl = photoUrl;
             await _dbContext.SaveChangesAsync();
@@ -100,176 +86,106 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
 
             if (!exists)
             {
-                throw new KeyNotFoundException($"Artifact with ID {id} not found.");
+                throw new InvalidOperationException($"Artifact with ID {id} not found.");
             }
 
-            try
-            {
-                await _dbContext.Artifacts.Where(a => a.Id == id).ExecuteDeleteAsync();
-                await _dbContext.SaveChangesAsync();
-                return;
-            } catch(DbUpdateException dbEx)
-            {
-                throw new Exception("An error occurred while deleting the artifact.", dbEx);
-            }
+            await _dbContext.Artifacts.Where(a => a.Id == id).ExecuteDeleteAsync();
+            await _dbContext.SaveChangesAsync();
+            return;
         }
         public async Task<List<Artifact>> GetArtifactByPriceRange(decimal minPrice, decimal maxPrice) {
-            try
-            {
-                if (minPrice <0 || maxPrice < 0)
-                {
-                    throw new ArgumentException("Price values must be non-negative.");
-                }
-                if (minPrice > maxPrice)
-                {
-                    throw new ArgumentException("Minimum price cannot be greater than maximum price.");
-                }
+            var results = await _dbContext.Artifacts
+                .Where(a => a.Price >= minPrice && a.Price <= maxPrice)
+                .ToListAsync();
 
-                var results = await _dbContext.Artifacts
-                    .Where(a => a.Price >= minPrice && a.Price <= maxPrice)
-                    .ToListAsync();
-
-                if(results.Count == 0 || results == null)
-                {
-                    return new List<Artifact>();
-                }
-
-                return results;
-            } catch(Exception ex)
-            {
-                if (ex is ArgumentException)
-                {
-                    throw;
-                }
-                else
-                {
-                    throw new Exception("An error occurred while retrieving artifacts by price range.", ex);
-                }
-            }
+            return results;
         }
+
         public async Task<List<Artifact>> GetArtifactByArtifactType(string artifactType) {
-            try
-            {
-                var results = await _dbContext.Artifacts
-                    .Where(a => a.ArtifactType.ToLower() == artifactType.ToLower())
-                    .ToListAsync();
+            var results = await _dbContext.Artifacts
+                .Where(a => a.ArtifactType.ToLower() == artifactType.ToLower())
+                .ToListAsync();
 
-                if (results.Count == 0 || results == null)
-                {
-                    return new List<Artifact>();
-                }
-
-                return results;
-            } catch (Exception ex)
-            {
-                throw new Exception("An error occurred while retrieving artifacts by artifact type.", ex);
-            }
+            return results;
         }
         public async Task<List<Artifact>> GetArtifactByOrigin(string origin) {
-            try
-            {
-                var results = await _dbContext.Artifacts
-                    .Where(a => a.Origin != null && a.Origin.ToLower() == origin.ToLower())
-                    .ToListAsync();
+            var results = await _dbContext.Artifacts
+                .Where(a => a.Origin != null && a.Origin.ToLower() == origin.ToLower())
+                .ToListAsync();
 
-                if (results.Count == 0 || results == null)
-                {
-                    return new List<Artifact>();
-                }
-
-                return results;
-            } catch (Exception ex)
-            {
-                throw new Exception("An error occurred while retrieving artifacts by origin.", ex);
-            }
+            return results;
         }
         public async Task<List<Artifact>> GetArtifactByEra(string era) {
-            try
-            {
-                var results = await _dbContext.Artifacts
-                    .Where(a => a.Era != null && a.Era.ToLower() == era.ToLower())
-                    .ToListAsync();
+            var results = await _dbContext.Artifacts
+                .Where(a => a.Era != null && a.Era.ToLower() == era.ToLower())
+                .ToListAsync();
 
-                if (results.Count == 0 || results == null)
-                {
-                    return new List<Artifact>();
-                }
-
-                return results;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("An error occurred while retrieving artifacts by origin.", ex);
-            }
+            return results;
+             
         }
         public async Task<List<Artifact>> GetAllSeriesArtifacts(int seriesId) {
-            try
-            {
-                var results = await _dbContext.Artifacts
-                    .Where(a => a.SeriesId == seriesId)
-                    .ToListAsync();
+            var exists = await _dbContext.QueriedArtifactSeries.AnyAsync(s => s.SeriesId == seriesId);
 
-                if (results.Count == 0 || results == null)
-                {
-                    return new List<Artifact>();
-                }
-
-                return results;
-            } catch(Exception ex)
+            if (!exists)
             {
-                throw new Exception("An error occurred while retrieving artifacts by series ID.", ex);
+                throw new InvalidOperationException($"Artifact series with ID {seriesId} not found.");
             }
+
+            var results = await _dbContext.Artifacts
+                .Where(a => a.SeriesId == seriesId)
+                .ToListAsync();
+
+            return results;
         }
         public async Task<List<Artifact>> GetArtifactsByStorageArea(int storageAreaId) {
-            try
+            var exists = await _dbContext.StorageAreas.AnyAsync(s => s.Id == storageAreaId);
+            if (!exists)
             {
-                var results = await _dbContext.Artifacts
-                    .Where(a => a.StorageArea == storageAreaId)
-                    .ToListAsync();
-
-                if (results.Count == 0 || results == null)
-                {
-                    return new List<Artifact>();
-                }
-
-                return results;
-            } catch(Exception ex)
-            {
-                throw new Exception("An error occurred while retrieving artifacts by storage area ID.", ex);
+                throw new InvalidOperationException($"Storage area with ID {storageAreaId} not found.");
             }
+
+            var results = await _dbContext.Artifacts
+                .Where(a => a.StorageArea == storageAreaId)
+                .ToListAsync();
+
+            return results;
         }
         public async Task UpdateAssignArtifactToArtifactSeries(int artifactId, int seriesId) {
             var artifact = await _dbContext.Artifacts.FindAsync(artifactId);
             if (artifact == null)
             {
-                throw new KeyNotFoundException($"Artifact with ID {artifactId} not found.");
+                throw new InvalidOperationException($"Artifact with ID {artifactId} not found.");
             }
 
-            try
+            var seriesExists = await _dbContext.QueriedArtifactSeries.AnyAsync(s => s.SeriesId == seriesId);
+            if (!seriesExists)
             {
-                artifact.SeriesId = seriesId;
-                await _dbContext.SaveChangesAsync();
-            } catch(DbUpdateException dbEx)
-            {
-                throw new Exception("An error occurred while assigning the artifact to the series.", dbEx);
+                throw new InvalidOperationException($"Artifact series with ID {seriesId} not found.");
             }
+                        
+            artifact.SeriesId = seriesId;
+            await _dbContext.SaveChangesAsync();
+
+            return;
         }
         public async Task UpdateAssignArtifactToStorageArea(int artifactId, int storageAreaId)
         {
             var artifact = await _dbContext.Artifacts.FindAsync(artifactId);
             if (artifact == null)
             {
-                throw new KeyNotFoundException($"Artifact with ID {artifactId} not found.");
+                throw new InvalidOperationException($"Artifact with ID {artifactId} not found.");
             }
-            try
+
+            var storageAreaExists = await _dbContext.StorageAreas.AnyAsync(s => s.Id == storageAreaId);
+            if (!storageAreaExists)
             {
-                artifact.StorageArea = storageAreaId;
-                await _dbContext.SaveChangesAsync();
+                throw new InvalidOperationException($"Storage area with ID {storageAreaId} not found.");
             }
-            catch (DbUpdateException dbEx)
-            {
-                throw new Exception("An error occurred while assigning the artifact to the storage area.", dbEx);
-            }
+
+            artifact.StorageArea = storageAreaId;
+            await _dbContext.SaveChangesAsync();
+
+            return;
         }
     }
 }

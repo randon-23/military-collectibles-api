@@ -24,10 +24,6 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
         public async Task<LiteratureSeries?> GetLiteratureSeries(int id)
         {
             var literatureSeries = await _dbContext.QueriedLiteratureSeries.FindAsync(id);
-            if(literatureSeries == null)
-            {
-                throw new KeyNotFoundException($"LiteratureSeries with ID {id} not found.");
-            }
             return literatureSeries;
         }
 
@@ -42,42 +38,30 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
 
         public async Task<LiteratureSeries> CreateLiteratureSeries(LiteratureSeries literatureSeries)
         {
-            var exists = await _dbContext.QueriedLiteratureSeries
-                .AnyAsync(ls => ls.SeriesName == literatureSeries.SeriesName);
+            var exists = await _dbContext.QueriedLiteratureSeries.AnyAsync(ls => ls.SeriesName == literatureSeries.SeriesName);
             if (exists)
             {
-                throw new Exception($"LiteratureSeries with name '{literatureSeries.SeriesName}' already exists.");
+                throw new InvalidOperationException($"LiteratureSeries with name '{literatureSeries.SeriesName}' already exists.");
             }
-            try
-            {
-                await _dbContext.QueriedLiteratureSeries.AddAsync(literatureSeries);
-                await _dbContext.SaveChangesAsync();
-                return literatureSeries;
-            }
-            catch (DbUpdateException ex)
-            {
-                throw new Exception("An error occurred while creating the LiteratureSeries.", ex);
-            }
+            
+            await _dbContext.QueriedLiteratureSeries.AddAsync(literatureSeries);
+            await _dbContext.SaveChangesAsync();
+            return literatureSeries;
         }
 
         public async Task<LiteratureSeries> UpdateLiteratureSeries(int id, LiteratureSeries literatureSeries)
         {
             var existingSeries = await _dbContext.QueriedLiteratureSeries.FindAsync(id);
+
             if (existingSeries == null)
             {
-                throw new KeyNotFoundException($"LiteratureSeries with ID {id} not found.");
+                throw new InvalidOperationException($"LiteratureSeries with ID {id} not found.");
             }
 
-            try
-            {
-                literatureSeries.SeriesId = id; // Ensure the ID remains unchanged
-                _dbContext.Entry(existingSeries).CurrentValues.SetValues(literatureSeries);
-                await _dbContext.SaveChangesAsync();
-                return existingSeries;
-            } catch (DbUpdateException ex)
-            {
-                throw new Exception("An error occurred while updating the LiteratureSeries.", ex);
-            }
+            literatureSeries.SeriesId = id; // Ensure the ID remains unchanged
+            _dbContext.Entry(existingSeries).CurrentValues.SetValues(literatureSeries);
+            await _dbContext.SaveChangesAsync();
+            return existingSeries;
         }
 
         public async Task DeleteLiteratureSeries(int id)
@@ -86,20 +70,14 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
 
             if (!exists)
             {
-                throw new KeyNotFoundException($"LiteratureSeries with ID {id} not found.");
+                throw new InvalidOperationException($"LiteratureSeries with ID {id} not found.");
             }
 
-            try
-            {
-                await _dbContext.QueriedLiteratureSeries
-                    .Where(ls => ls.SeriesId == id)
-                    .ExecuteDeleteAsync();
-                await _dbContext.SaveChangesAsync();
-                return;
-            } catch(DbUpdateException ex)
-            {
-                throw new Exception("An error occurred while deleting the LiteratureSeries.", ex);
-            }
+            await _dbContext.QueriedLiteratureSeries
+                .Where(ls => ls.SeriesId == id)
+                .ExecuteDeleteAsync();
+            await _dbContext.SaveChangesAsync();
+            return;
         }
     }
 }

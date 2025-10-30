@@ -24,10 +24,6 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
         public async Task<InsigniaSeries?> GetInsigniaSeries(int id)
         {
             var insigniaSeries = await _dbContext.QueriedInsigniaSeries.FindAsync(id);
-            if (insigniaSeries == null)
-            {
-                throw new KeyNotFoundException($"InsigniaSeries with ID {id} not found.");
-            }
             return insigniaSeries;
         }
 
@@ -46,18 +42,12 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
                 .AnyAsync(ls => ls.SeriesName == insigniaSeries.SeriesName);
             if (exists)
             {
-                throw new Exception($"InsigniaSeries with name '{insigniaSeries.SeriesName}' already exists.");
+                throw new InvalidOperationException($"InsigniaSeries with name '{insigniaSeries.SeriesName}' already exists.");
             }
-            try
-            {
-                await _dbContext.QueriedInsigniaSeries.AddAsync(insigniaSeries);
-                await _dbContext.SaveChangesAsync();
-                return insigniaSeries;
-            }
-            catch (DbUpdateException ex)
-            {
-                throw new Exception("An error occurred while creating the InsigniaSeries.", ex);
-            }
+            
+            await _dbContext.QueriedInsigniaSeries.AddAsync(insigniaSeries);
+            await _dbContext.SaveChangesAsync();
+            return insigniaSeries;
         }
 
         public async Task<InsigniaSeries> UpdateInsigniaSeries(int id, InsigniaSeries insigniaSeries)
@@ -65,20 +55,13 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
             var existingSeries = await _dbContext.QueriedInsigniaSeries.FindAsync(id);
             if (existingSeries == null)
             {
-                throw new KeyNotFoundException($"InsigniaSeries with ID {id} not found.");
+                throw new InvalidOperationException($"InsigniaSeries with ID {id} not found.");
             }
 
-            try
-            {
-                insigniaSeries.SeriesId = id; // Ensure the ID remains unchanged
-                _dbContext.Entry(existingSeries).CurrentValues.SetValues(insigniaSeries);
-                await _dbContext.SaveChangesAsync();
-                return existingSeries;
-            }
-            catch (DbUpdateException ex)
-            {
-                throw new Exception("An error occurred while updating the InsigniaSeries.", ex);
-            }
+            insigniaSeries.SeriesId = id; // Ensure the ID remains unchanged
+            _dbContext.Entry(existingSeries).CurrentValues.SetValues(insigniaSeries);
+            await _dbContext.SaveChangesAsync();
+            return existingSeries;
         }
 
         public async Task DeleteInsigniaSeries(int id)
@@ -87,21 +70,14 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
 
             if (!exists)
             {
-                throw new KeyNotFoundException($"InsigniaSeries with ID {id} not found.");
+                throw new InvalidOperationException($"InsigniaSeries with ID {id} not found.");
             }
 
-            try
-            {
-                await _dbContext.QueriedInsigniaSeries
-                    .Where(ase => ase.SeriesId == id)
-                    .ExecuteDeleteAsync();
-                await _dbContext.SaveChangesAsync();
-                return;
-            }
-            catch (DbUpdateException ex)
-            {
-                throw new Exception("An error occurred while deleting the InsigniaSeries.", ex);
-            }
+            await _dbContext.QueriedInsigniaSeries
+                .Where(ase => ase.SeriesId == id)
+                .ExecuteDeleteAsync();
+            await _dbContext.SaveChangesAsync();
+            return;
         }
     }
 }

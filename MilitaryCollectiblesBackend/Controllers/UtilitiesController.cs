@@ -71,6 +71,14 @@ namespace MilitaryCollectiblesBackend.Controllers
 
                 return Ok(new { message = "File uploaded successfully", path = fullPath });
             }
+            catch (InvalidOperationException ex)
+            {
+                return StatusCode(200, new
+                {
+                    message = "Entity created successfully, but file upload failed due to invalid operation.",
+                    error = ex.Message
+                });
+            }
             catch (Exception ex)
             {
                 return StatusCode(200, new

@@ -33,10 +33,6 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
 
         public async Task<Equipment?> GetEquipment(int id){
             var equipment = await _dbContext.Equipments.FindAsync(id);
-            if(equipment == null)
-            {
-                throw new KeyNotFoundException($"Equipment with ID {id} not found.");
-            }
             return equipment;
         }
 
@@ -53,17 +49,11 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
 
             if (exists)
             {
-                throw new Exception($"Equipment with name {equipment.Name} already exists.");
+                throw new InvalidOperationException($"An equipment with name {equipment.Name} already exists.");
             }
-            try
-            {
-                await _dbContext.Equipments.AddAsync(equipment);
-                await _dbContext.SaveChangesAsync();
-                return equipment;
-            } catch(DbUpdateException dbEx)
-            {
-                throw new Exception("An error occurred while creating the equipment.", dbEx);
-            }
+            await _dbContext.Equipments.AddAsync(equipment);
+            await _dbContext.SaveChangesAsync();
+            return equipment;
         }
 
         public async Task<Equipment> UpdateEquipment(int id, Equipment equipment){
@@ -73,24 +63,19 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
                 throw new KeyNotFoundException($"Equipment with ID {id} not found.");
             }
 
-            try
-            {
-                equipment.Id = id; // Ensure the ID remains unchanged
-                _dbContext.Entry(existingEquipment).CurrentValues.SetValues(equipment);
-                await _dbContext.SaveChangesAsync();
-                return existingEquipment;
-            } catch(DbUpdateException dbEx)
-            {
-                throw new Exception("An error occurred while updating the equipment.", dbEx);
-            }
+            equipment.Id = id; // Ensure the ID remains unchanged
+            _dbContext.Entry(existingEquipment).CurrentValues.SetValues(equipment);
+            await _dbContext.SaveChangesAsync();
+            return existingEquipment;
         }
 
+        //Handled by utilities controller after file upload
         public async Task UpdatePhotoUrl(int equipmentId, string photoUrl)
         {
             var equipment = await _dbContext.Equipments.FindAsync(equipmentId);
             if (equipment == null)
             {
-                throw new KeyNotFoundException($"Equipment with ID {equipmentId} not found.");
+                throw new InvalidOperationException($"Equipment with ID {equipmentId} not found.");
             }
             equipment.PhotoUrl = photoUrl;
             await _dbContext.SaveChangesAsync();
@@ -104,147 +89,68 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
                 throw new KeyNotFoundException($"Equipment with ID {id} not found.");
             }
 
-            try
-            {
-                await _dbContext.Equipments.Where(e => e.Id == id).ExecuteDeleteAsync();
-                await _dbContext.SaveChangesAsync();
-                return;
-            } catch(DbUpdateException dbEx)
-            {
-                throw new Exception("An error occurred while deleting the equipment.", dbEx);
-            }
+            await _dbContext.Equipments.Where(e => e.Id == id).ExecuteDeleteAsync();
+            await _dbContext.SaveChangesAsync();
+            return;
         }
 
         public async Task<List<Equipment>> GetEquipmentByPriceRange(decimal minPrice, decimal maxPrice){
-            try
-            {
-                if (minPrice < 0 || maxPrice < 0)
-                {
-                    throw new ArgumentException("Price values must be non-negative.");
-                }
-                if (minPrice > maxPrice)
-                {
-                    throw new ArgumentException("Minimum price cannot be greater than maximum price.");
-                }
+            var results = await _dbContext.Equipments
+                .Where(e => e.Price >= minPrice && e.Price <= maxPrice)
+                .ToListAsync();
 
-                var results = await _dbContext.Equipments
-                    .Where(e => e.Price >= minPrice && e.Price <= maxPrice)
-                    .ToListAsync();
-
-                if (results.Count == 0 || results == null)
-                {
-                    return new List<Equipment>();
-                }
-
-                return results;
-            } catch(Exception ex)
-            {
-                throw new Exception("An error occurred while retrieving equipments by price range.", ex);
-            }
+            return results;            
         }
 
         public async Task<List<Equipment>> GetEquipmentByEquipmentType(string equipmentType)
         {
-            try
-            {
-                var results = await _dbContext.Equipments
-                    .Where(e => e.EquipmentType.ToLower() == equipmentType.ToLower())
-                    .ToListAsync();
+            var results = await _dbContext.Equipments
+                .Where(e => e.EquipmentType.ToLower() == equipmentType.ToLower())
+                .ToListAsync();
 
-                if (results.Count == 0 || results == null)
-                {
-                    return new List<Equipment>();
-                }
-
-                return results;
-            } catch(Exception ex)
-            {
-                throw new Exception("An error occurred while retrieving equipments by equipment type.", ex);
-            }
+            return results;   
         }
 
         public async Task<List<Equipment>> GetEquipmentByOrigin(string origin)
         {
-            try
-            {
-                var results = await _dbContext.Equipments
-                    .Where(e => e.Origin != null && e.Origin.ToLower() == origin.ToLower())
-                    .ToListAsync();
+            var results = await _dbContext.Equipments
+                .Where(e => e.Origin != null && e.Origin.ToLower() == origin.ToLower())
+                .ToListAsync();
 
-                if (results.Count == 0 || results == null)
-                {
-                    return new List<Equipment>();
-                }
-
-                return results;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("An error occurred while retrieving equipments by origin.", ex);
-            }
+            return results;   
         }
 
         public async Task<List<Equipment>> GetEquipmentByEra(string era)
         {
-            try
-            {
-                var results = await _dbContext.Equipments
-                    .Where(e => e.Era != null && e.Era.ToLower() == era.ToLower())
-                    .ToListAsync();
+            var results = await _dbContext.Equipments
+                .Where(e => e.Era != null && e.Era.ToLower() == era.ToLower())
+                .ToListAsync();
 
-                if (results.Count == 0 || results == null)
-                {
-                    return new List<Equipment>();
-                }
-
-                return results;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("An error occurred while retrieving equipments by origin.", ex);
-            }
+            return results;
         }
 
         public async Task<List<Equipment>> GetEquipmentByMaterial(string material)
         {
-            try
-            {
-                var results = await _dbContext.Equipments
-                    .Where(e => e.Material != null && e.Material.ToLower() == material.ToLower())
-                    .ToListAsync();
+            var results = await _dbContext.Equipments
+                .Where(e => e.Material != null && e.Material.ToLower() == material.ToLower())
+                .ToListAsync();
 
-                if (results.Count == 0 || results == null)
-                {
-                    return new List<Equipment>();
-                }
-
-                return results;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("An error occurred while retrieving equipments by material.", ex);
-            }
+            return results; 
         }
 
         public async Task<List<Equipment>> GetEquipmentsByStorageArea(int storageAreaId)
         {
-            try
+            var exists = await _dbContext.StorageAreas.AnyAsync(sa => sa.Id == storageAreaId);
+            if (!exists)
             {
-                var results = await _dbContext.Equipments
-                    .Where(e => e.StorageArea == storageAreaId)
-                    .ToListAsync();
-
-                if (results.Count == 0 || results == null)
-                {
-                    return new List<Equipment>();
-                }
-
-                return results;
+                throw new InvalidOperationException($"Storage area with ID {storageAreaId} not found.");
             }
-            catch (Exception ex)
-            {
-                throw new Exception("An error occurred while retrieving equipments by storage area ID.", ex);
-            }
+
+            var results = await _dbContext.Equipments
+                .Where(e => e.StorageArea == storageAreaId)
+                .ToListAsync();
+
+            return results;
         }
 
         public async Task UpdateAssignEquipmentToStorageArea(int equipmentId, int storageAreaId)
@@ -252,17 +158,19 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
             var equipment = await _dbContext.Equipments.FindAsync(equipmentId);
             if (equipment == null)
             {
-                throw new KeyNotFoundException($"Insignia with ID {equipmentId} not found.");
+                throw new InvalidOperationException($"Insignia with ID {equipmentId} not found.");
             }
-            try
+            
+            var storageAreaExists = await _dbContext.StorageAreas.AnyAsync(sa => sa.Id == storageAreaId);
+            if (!storageAreaExists)
             {
-                equipment.StorageArea = storageAreaId;
-                await _dbContext.SaveChangesAsync();
+                throw new InvalidOperationException($"Storage area with ID {storageAreaId} not found.");
             }
-            catch (DbUpdateException dbEx)
-            {
-                throw new Exception("An error occurred while assigning the equipment to the storage area.", dbEx);
-            }
+
+            equipment.StorageArea = storageAreaId;
+            await _dbContext.SaveChangesAsync();
+
+            return;
         }
     }
 }

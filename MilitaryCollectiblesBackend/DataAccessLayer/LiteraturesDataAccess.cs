@@ -74,16 +74,17 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
             literature.Id = id; // Ensure the ID remains unchanged
             _dbContext.Entry(existingLiterature).CurrentValues.SetValues(literature); // does not need async coz modifies the tracked entity state 
             await _dbContext.SaveChangesAsync();
-            return literature;
+            return existingLiterature;
             
         }
 
+        //Handled by utilities controller after file upload
         public async Task UpdatePhotoUrl(int literatureId, string photoUrl)
         {
             var literature = await _dbContext.Literatures.FindAsync(literatureId);
             if(literature == null)
             {
-                throw new KeyNotFoundException($"Literature with ID {literatureId} not found.");
+                throw new InvalidOperationException($"Literature with ID {literatureId} not found.");
             }
             literature.PhotoUrl = photoUrl;
             await _dbContext.SaveChangesAsync();
@@ -121,18 +122,11 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
         }
 
         public async Task<List<Literature>> GetLiteratureByPublicationYear(int publicationYear){
-            try
-            {
-                var results = await _dbContext.Literatures
-                    .Where(l => l.PublicationYear == publicationYear)
-                    .ToListAsync();
+            var results = await _dbContext.Literatures
+                .Where(l => l.PublicationYear == publicationYear)
+                .ToListAsync();
 
-                return results;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("An error occurred while retrieving literatures by publication year.", ex);
-            }
+            return results;
         }
 
         public async Task<List<Literature>> GetLiteratureByPublicationYearRange(int startYear, int endYear){
@@ -160,112 +154,87 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
         }
 
         public async Task<List<Literature>> GetLiteratureByLiteratureType(string literatureType){
-            try
-            {
-                var results = await _dbContext.Literatures
-                    .Where(l => l.LiteratureType.ToLower() == literatureType.ToLower())
-                    .ToListAsync();
+            var results = await _dbContext.Literatures
+                .Where(l => l.LiteratureType.ToLower() == literatureType.ToLower())
+                .ToListAsync();
                 
-                if (results.Count == 0 || results == null)
-                {
-                    return new List<Literature>();
-                }
-                
-                return results;
-            } catch(Exception ex)
-            {
-                throw new Exception("An error occurred while retrieving literatures by literature type.", ex);
-            }
+            return results;
         }
 
         public async Task<List<Literature>> GetLiteratureByBindingType(string bindingType){
-            try
-            {
-                var results = await _dbContext.Literatures
-                    .Where(l => l.BindingType.ToLower() == bindingType.ToLower())
-                    .ToListAsync();
+            var results = await _dbContext.Literatures
+                .Where(l => l.BindingType.ToLower() == bindingType.ToLower())
+                .ToListAsync();
 
-                if (results.Count == 0 || results == null)
-                {
-                    return new List<Literature>();
-                }
-
-                return results;
-            } catch(Exception ex)
-            {
-                throw new Exception("An error occurred while retrieving literatures by binding type.", ex);
-            }
+            return results;
         }
 
         public async Task<List<Literature>> GetAllSeriesLiteratures(int seriesId){
-            try
-            {
-                var results = await _dbContext.Literatures
-                    .Where(l => l.SeriesId == seriesId)
-                    .ToListAsync();
-            
-                if (results.Count == 0 || results == null)
-                {
-                    return new List<Literature>();
-                }
+            var exists = await _dbContext.QueriedLiteratureSeries.AnyAsync(s => s.SeriesId == seriesId);
 
-                return results;
-            } catch(Exception ex)
+            if (!exists)
             {
-                throw new Exception("An error occurred while retrieving literatures by series ID.", ex);
+                throw new InvalidOperationException($"Literature series with ID {seriesId} not found.");
             }
+
+            var results = await _dbContext.Literatures
+                .Where(l => l.SeriesId == seriesId)
+                .ToListAsync();
+
+            return results;
         }
 
         public async Task<List<Literature>> GetLiteraturesByStorageArea(int storageAreaId){
-            try
-            {
-                var results = await _dbContext.Literatures
-                    .Where(l => l.StorageArea == storageAreaId)
-                    .ToListAsync();
+            var exists = await _dbContext.StorageAreas.AnyAsync(s => s.Id == storageAreaId);
 
-                if (results.Count == 0 || results == null)
-                {
-                    return new List<Literature>();
-                }
-
-                return results;
-            } catch(Exception ex)
+            if (!exists)
             {
-                throw new Exception("An error occurred while retrieving literatures by storage area ID.", ex);
+                throw new InvalidOperationException($"Storage area with ID {storageAreaId} not found.");
             }
+
+            var results = await _dbContext.Literatures
+                .Where(l => l.StorageArea == storageAreaId)
+                .ToListAsync();
+
+            return results;
         }
 
         public async Task UpdateAssignLiteratureToLiteratureSeries(int literatureId, int seriesId){
             var literature = await _dbContext.Literatures.FindAsync(literatureId);
             if (literature == null)
             {
-                throw new KeyNotFoundException($"Literature with ID {literatureId} not found.");
+                throw new InvalidOperationException($"Literature with ID {literatureId} not found.");
             }
 
-            try
+            var seriesExists = await _dbContext.QueriedLiteratureSeries.AnyAsync(s => s.SeriesId == seriesId);
+            if (!seriesExists)
             {
-                literature.SeriesId = seriesId;
-                await _dbContext.SaveChangesAsync();
-            } catch(Exception ex)
-            {
-                throw new Exception("An error occurred while assigning literature to literature series.", ex);
+                throw new InvalidOperationException($"Literature series with ID {seriesId} not found.");
             }
+
+            literature.SeriesId = seriesId;
+            await _dbContext.SaveChangesAsync();
+
+            return;
         }
 
         public async Task UpdateAssignLiteratureToStorageArea(int literatureId, int storageAreaId){
             var literature = await _dbContext.Literatures.FindAsync(literatureId);
             if (literature == null)
             {
-                throw new KeyNotFoundException($"Literature with ID {literatureId} not found.");
+                throw new InvalidOperationException($"Literature with ID {literatureId} not found.");
             }
-            try
+            
+            var storageAreaExists = await _dbContext.StorageAreas.AnyAsync(s => s.Id == storageAreaId);
+            if (!storageAreaExists)
             {
-                literature.StorageArea = storageAreaId;
-                await _dbContext.SaveChangesAsync();
-            } catch (Exception ex)
-            {
-                throw new Exception("An error occurred while assigning literature to storage area.", ex);
+                throw new InvalidOperationException($"Storage area with ID {storageAreaId} not found.");
             }
+
+            literature.StorageArea = storageAreaId;
+            await _dbContext.SaveChangesAsync();
+
+            return;
         }
     }
 }

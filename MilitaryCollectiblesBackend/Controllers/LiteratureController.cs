@@ -31,11 +31,11 @@ namespace MilitaryCollectiblesBackend.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"An unexpected error occurred: {ex.Message}");
+                return StatusCode(500, $"An  error occurred: {ex.Message}");
             }
         }
 
-        [HttpGet]
+        [HttpGet("get-literatures")]
         public async Task<ActionResult<List<Literature>>> GetAllLiteratures([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 25)
         {
             try
@@ -50,7 +50,7 @@ namespace MilitaryCollectiblesBackend.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"An unexpected error occurred: {ex.Message}");
+                return StatusCode(500, $"An  error occurred: {ex.Message}");
             }
         }
 
@@ -100,7 +100,7 @@ namespace MilitaryCollectiblesBackend.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"An unexpected error occurred: {ex.Message}");
+                return StatusCode(500, $"An  error occurred: {ex.Message}");
             }
         }
 
@@ -135,11 +135,11 @@ namespace MilitaryCollectiblesBackend.Controllers
             }
             catch (InvalidOperationException ex)
             {
-                return Conflict(ex.Message);
+                return NotFound(ex.Message);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"An unexpected error occurred: {ex.Message}");
+                return StatusCode(500, $"An  error occurred: {ex.Message}");
             }
         }
 
@@ -157,7 +157,7 @@ namespace MilitaryCollectiblesBackend.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"An unexpected error occurred: {ex.Message}");
+                return StatusCode(500, $"An  error occurred: {ex.Message}");
             }
         }
 
@@ -184,7 +184,7 @@ namespace MilitaryCollectiblesBackend.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"An unexpected error occurred: {ex.Message}");
+                return StatusCode(500, $"An  error occurred: {ex.Message}");
             }
         }
 
@@ -201,11 +201,11 @@ namespace MilitaryCollectiblesBackend.Controllers
                 return Ok(literatures);
             } catch(Exception ex)
             {
-                return StatusCode(500, $"An unexpected error occurred: {ex.Message}");
+                return StatusCode(500, $"An  error occurred: {ex.Message}");
             }
         }
 
-        [HttpGet("get-literature_by-pub-year/{year}")]
+        [HttpGet("get-literature-by-pub-year/{year}")]
         public async Task<ActionResult<List<Literature>>> GetLiteratureByPublicationYear(int year)
         {
             try
@@ -225,7 +225,7 @@ namespace MilitaryCollectiblesBackend.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"An unexpected error occurred: {ex.Message}");
+                return StatusCode(500, $"An  error occurred: {ex.Message}");
             }
         }
 
@@ -252,7 +252,7 @@ namespace MilitaryCollectiblesBackend.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"An unexpected error occurred: {ex.Message}");
+                return StatusCode(500, $"An  error occurred: {ex.Message}");
             }
         }
 
@@ -270,7 +270,7 @@ namespace MilitaryCollectiblesBackend.Controllers
                 return Ok(literatures);
             } catch(Exception ex)
             {
-                return StatusCode(500, $"An unexpected error occurred: {ex.Message}");
+                return StatusCode(500, $"An  error occurred: {ex.Message}");
             }
         }
 
@@ -295,7 +295,129 @@ namespace MilitaryCollectiblesBackend.Controllers
                 return Ok(literatures);
             } catch(Exception ex)
             {
-                return StatusCode(500, $"An unexpected error occurred: {ex.Message}");
+                return StatusCode(500, $"An  error occurred: {ex.Message}");
+            }
+        }
+
+        [HttpGet("get-literature-by-literature-type/{literatureType}")]
+        public async Task<ActionResult<List<Literature>>> GetLiteratureByLiteratureType(string literatureType)
+        {
+            try
+            {
+                // Validation against predefined types will be done in DAL method
+                var literatures = await _literaturesDataAccess.GetLiteratureByLiteratureType(literatureType);
+                if (literatures == null || literatures.Count == 0)
+                {
+                    return NotFound($"No literatures found of type: {literatureType}");
+                }
+
+                return Ok(literatures);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"An  error occurred: {ex.Message}");
+            }
+        }
+
+        [HttpGet("get-litreature-by-binding-type/{bindingType}")]
+        public async Task<ActionResult<List<Literature>>> GetLiteratureByBindingType(string bindingType)
+        {
+            try
+            {
+                // Validation against predefined types will be done in DAL method
+                var literatures = await _literaturesDataAccess.GetLiteratureByBindingType(bindingType);
+                if (literatures == null || literatures.Count == 0)
+                {
+                    return NotFound($"No literatures found with binding type: {bindingType}");
+                }
+
+                return Ok(literatures);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"An  error occurred: {ex.Message}");
+            }
+        }
+
+        [HttpGet("get-all-series-literatures/{seriesId}")]
+        public async Task<ActionResult<List<Literature>>> GetAllSeriesLiteratures(int seriesId)
+        {
+            try
+            {
+                var literatures = await _literaturesDataAccess.GetAllSeriesLiteratures(seriesId);
+                if (literatures == null || literatures.Count == 0)
+                {
+                    return NotFound($"No literatures found for series ID: {seriesId}");
+                }
+
+                return Ok(literatures);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"An  error occurred: {ex.Message}");
+            }
+        }
+
+        [HttpGet("get-literature-by-storage-area/{storageAreaId}")]
+        public async Task<ActionResult<List<Literature>>> GetLiteraturesByStorageArea(int storageAreaId)
+        {
+            try
+            {
+                var literatures = await _literaturesDataAccess.GetLiteraturesByStorageArea(storageAreaId);
+                if (literatures == null || literatures.Count == 0)
+                {
+                    return NotFound($"No literatures found in storage area ID: {storageAreaId}");
+                }
+
+                return Ok(literatures);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"An  error occurred: {ex.Message}");
+            }
+        }
+
+        [HttpPut("assign-literature-to-series/{literatureId}/series/{seriesId}")]
+        public async Task<ActionResult> UpdateAssignLiteratureToLiteratureSeries(int literatureId, int seriesId)
+        {
+            try
+            {
+                await _literaturesDataAccess.UpdateAssignLiteratureToLiteratureSeries(literatureId, seriesId);
+                return NoContent();
+            } 
+            catch(InvalidOperationException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"An  error occurred: {ex.Message}");
+            }
+        }
+
+        [HttpPut("assign-literature-to-storage-area/{literatureId}/storage-area/{storageAreaId}")]
+        public async Task<ActionResult> UpdateAssignLiteratureToStorageArea(int literatureId, int storageAreaId)
+        {
+            try
+            {
+                await _literaturesDataAccess.UpdateAssignLiteratureToStorageArea(literatureId, storageAreaId);
+                return NoContent();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"An  error occurred: {ex.Message}");
             }
         }
     }
