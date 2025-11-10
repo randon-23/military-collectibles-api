@@ -1,14 +1,12 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
-using MilitaryCollectiblesBackend.DataAccessLayer;
 using MilitaryCollectiblesBackend.DataAccessLayer.Services;
-using MilitaryCollectiblesBackend.Models;
 
 namespace MilitaryCollectiblesBackend.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
     public class UtilitiesController : ControllerBase
+    // Single Responsibility Principle: Controllers should have only one reason to change; adding search logic to a "utilities" controller violates this and introduces complexity
     {
         private readonly IPhotoUpdater _photoUpdater;
         public UtilitiesController(IPhotoUpdater photoUpdater) 
