@@ -58,7 +58,7 @@ namespace MilitaryCollectiblesBackend.Controllers
         [HttpPost("create-insignia")]
         public async Task<ActionResult<ResponseDto<Insignia>>> CreateInsignia([FromBody] Insignia insignia)
         {
-            if (insignia.Name.IsNullOrEmpty() || insignia.Description.IsNullOrEmpty() || insignia.InsigniaType.IsNullOrEmpty())
+            if (insignia.Name.IsNullOrEmpty() || insignia.Description.IsNullOrEmpty() || insignia.InsigniaType.InsigniaTypeName.IsNullOrEmpty())
             {
                 return BadRequest("Name, Description, and InsigniaType are required fields.");
             }
@@ -90,7 +90,7 @@ namespace MilitaryCollectiblesBackend.Controllers
         [HttpPut("update-insignia/{id}")]
         public async Task<ActionResult<Insignia>> UpdateInsignia(int id, [FromBody] Insignia insignia)
         {
-            if (insignia.Name.IsNullOrEmpty() || insignia.Description.IsNullOrEmpty() || insignia.InsigniaType.IsNullOrEmpty())
+            if (insignia.Name.IsNullOrEmpty() || insignia.Description.IsNullOrEmpty() || insignia.InsigniaType.InsigniaTypeName.IsNullOrEmpty())
             {
                 return BadRequest("Name, Description, and InsigniaType are required fields.");
             }

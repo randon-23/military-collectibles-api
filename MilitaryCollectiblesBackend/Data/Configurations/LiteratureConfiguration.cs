@@ -10,15 +10,29 @@ namespace MilitaryCollectiblesBackend.Data.Configurations
         {
             builder.ToTable("Literatures");
 
-            builder.ToTable(t => t.HasCheckConstraint(
-                "chk_LiteratureType",
-                "LiteratureType IN ('Book', 'Magazine')")
-            ); // need the ToTable lambda as they are applied at the db level, not the entity model level
+            builder.HasOne(l => l.LiteratureType)
+                .WithMany(lt => lt.Literatures)
+                .HasForeignKey(l => l.LiteratureTypeId)
+                .IsRequired()
+                .OnDelete(DeleteBehavior.Restrict);
 
-            builder.ToTable(t => t.HasCheckConstraint(
-                "chk_BindingType",
-                "BindingType IN ('Paperback', 'Hardback')")
-            );
+            builder.HasOne(l => l.BindingType)
+                .WithMany(bt => bt.Literatures)
+                .HasForeignKey(l => l.BindingTypeId)
+                .IsRequired()
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.HasOne(l => l.Author)
+                .WithMany(a => a.Literatures)
+                .HasForeignKey(l => l.AuthorId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            builder.HasOne(l => l.Publisher)
+                .WithMany(p => p.Literatures)
+                .HasForeignKey(l => l.PublisherId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.SetNull);
 
             // Does not need the ToTable lambda as it is applied at the entity model level, models entity relationships
             builder.HasOne(l => l.LiteratureSeries) // Navigation property for LiteratureSeries

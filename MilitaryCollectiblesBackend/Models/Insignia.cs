@@ -20,20 +20,16 @@ namespace MilitaryCollectiblesBackend.Models
         public decimal Price { get; set; } = 0.00m;
 
         [Required]
-        [MaxLength(50)]
-        public string InsigniaType { get; set; } = string.Empty;
+        public int InsigniaTypeId { get; set; }
 
         [Required]
         public bool PartOfSet { get; set; } = false;
 
-        [MaxLength(100)]
-        public string? Origin { get; set; }
+        public int? OriginId { get; set; }
 
-        [MaxLength (100)]
-        public string? Era { get; set; }
+        public int? EraId { get; set; }
 
-        [MaxLength(100)]
-        public string? Material { get; set; }
+        public int? MaterialId { get; set; }
 
         [Required]
         [MaxLength(500)]
@@ -49,5 +45,9 @@ namespace MilitaryCollectiblesBackend.Models
 
         public StorageArea? StorageAreaDetails { get; set; }
         public InsigniaSeries? InsigniaSeries { get; set; }
-        }
+        public InsigniaType InsigniaType { get; set; } = new InsigniaType();
+        public Origin? Origin { get; set; }
+        public Era? Era { get; set; }
+        public Material? Material { get; set; }
+    }
 }

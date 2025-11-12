@@ -9,10 +9,6 @@ namespace MilitaryCollectiblesBackend.Data.Configurations
         public void Configure(EntityTypeBuilder<Artifact> builder)
         {
             builder.ToTable("Artifacts");
-            builder.ToTable(t => t.HasCheckConstraint(
-                "chk_ArtifactType",
-                "ArtifactType IN ('Photograph', 'Poster', 'Document')")
-            );
 
             builder.HasOne(a => a.ArtifactSeries) // Navigation property for LiteratureSeries
                 .WithMany(s => s.Artifacts)
@@ -24,7 +20,25 @@ namespace MilitaryCollectiblesBackend.Data.Configurations
                 .WithMany(loc => loc.Artifacts)
                 .HasForeignKey(a => a.StorageArea)
                 .IsRequired(false) // Location is optional
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.SetNull);
+
+            builder.HasOne(a => a.ArtifactType)
+                .WithMany(at => at.Artifacts)
+                .HasForeignKey(a => a.ArtifactTypeId)
+                .IsRequired()
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.HasOne(a => a.Era)
+                .WithMany(e => e.Artifacts)
+                .HasForeignKey(a => a.EraId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            builder.HasOne(a => a.Origin)
+                .WithMany(o => o.Artifacts)
+                .HasForeignKey(a => a.OriginId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.SetNull);
         }
     }
 }

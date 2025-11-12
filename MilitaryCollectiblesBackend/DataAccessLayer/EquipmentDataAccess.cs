@@ -1,6 +1,7 @@
 ﻿using MilitaryCollectiblesBackend.Data;
 using MilitaryCollectiblesBackend.Models;
 using Microsoft.EntityFrameworkCore;
+using MilitaryCollectiblesBackend.CustomClasses;
 
 namespace MilitaryCollectiblesBackend.DataAccessLayer
 {
@@ -22,6 +23,8 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
         // AddPhoto? - part of update equipment?
         Task<List<Equipment>> GetEquipmentsByStorageArea(int storageAreaId);
         Task UpdateAssignEquipmentToStorageArea(int equipmentId, int storageAreaId);
+        Task<List<Equipment>> SearchEquipment(EquipmentSearchFilterDto filters);
+        Task<List<Equipment>> SimpleSearch(string query);
     }
     public class EquipmentDataAccess : IEquipmentDataAccess
     {
@@ -105,7 +108,7 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
         public async Task<List<Equipment>> GetEquipmentByEquipmentType(string equipmentType)
         {
             var results = await _dbContext.Equipments
-                .Where(e => e.EquipmentType.ToLower() == equipmentType.ToLower())
+                .Where(e => e.EquipmentType.EquipmentTypeName.ToLower() == equipmentType.ToLower())
                 .ToListAsync();
 
             return results;   
@@ -114,7 +117,7 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
         public async Task<List<Equipment>> GetEquipmentByOrigin(string origin)
         {
             var results = await _dbContext.Equipments
-                .Where(e => e.Origin != null && e.Origin.ToLower() == origin.ToLower())
+                .Where(e => e.Origin != null && e.Origin.OriginName.ToLower() == origin.ToLower())
                 .ToListAsync();
 
             return results;   
@@ -123,7 +126,7 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
         public async Task<List<Equipment>> GetEquipmentByEra(string era)
         {
             var results = await _dbContext.Equipments
-                .Where(e => e.Era != null && e.Era.ToLower() == era.ToLower())
+                .Where(e => e.Era != null && e.Era.EraName.ToLower() == era.ToLower())
                 .ToListAsync();
 
             return results;
@@ -132,7 +135,7 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
         public async Task<List<Equipment>> GetEquipmentByMaterial(string material)
         {
             var results = await _dbContext.Equipments
-                .Where(e => e.Material != null && e.Material.ToLower() == material.ToLower())
+                .Where(e => e.Material != null && e.Material.MaterialName.ToLower() == material.ToLower())
                 .ToListAsync();
 
             return results; 
@@ -171,6 +174,64 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
             await _dbContext.SaveChangesAsync();
 
             return;
+        }
+
+        public async Task<List<Equipment>> SearchEquipment(EquipmentSearchFilterDto filters)
+        {
+            var query = _dbContext.Equipments.AsQueryable();
+
+            if (!string.IsNullOrEmpty(filters.Name))
+            {
+                query = query.Where(e => e.Name.Contains(filters.Name));
+            }
+            if (filters.MinPrice.HasValue)
+            {
+                query = query.Where(e => e.Price >= filters.MinPrice.Value);
+            }
+            if (filters.MaxPrice.HasValue)
+            {
+                query = query.Where(e => e.Price <= filters.MaxPrice.Value);
+            }
+            if (!string.IsNullOrEmpty(filters.EquipmentType))
+            {
+                var typeLower = filters.EquipmentType.ToLower();
+                query = query.Where(e => e.EquipmentType.EquipmentTypeName.ToLower() == typeLower);
+            }
+            if (!string.IsNullOrEmpty(filters.Origin))
+            {
+                var originLower = filters.Origin.ToLower();
+                query = query.Where(e => e.Origin != null && e.Origin.OriginName.ToLower() == originLower);
+            }
+            if (!string.IsNullOrEmpty(filters.Era))
+            {
+                var eraLower = filters.Era.ToLower();
+                query = query.Where(e => e.Era != null && e.Era.EraName.ToLower() == eraLower);
+            }
+            if (!string.IsNullOrEmpty(filters.Material))
+            {
+                var materialLower = filters.Material.ToLower();
+                query = query.Where(e => e.Material != null && e.Material.MaterialName.ToLower() == materialLower);
+            }
+
+            return await query.ToListAsync();
+        }
+
+        public async Task<List<Equipment>> SimpleSearch(string query)
+        {
+            if (string.IsNullOrWhiteSpace(query))
+                return new List<Equipment>();
+
+            query = query.ToLower();
+            var results = await _dbContext.Equipments
+                .Where(e => e.Name.ToLower().Contains(query)
+                            //(e.EquipmentType != null && e.EquipmentType.ToLower().Contains(query)) ||
+                            //(e.Origin != null && e.Origin.ToLower().Contains(query)) ||
+                            //(e.Era != null && e.Era.ToLower().Contains(query)) ||
+                            //(e.Material != null && e.Material.ToLower().Contains(query)) ||
+                            //e.Description.ToLower().Contains(query)) need significant token matching for description field
+                )
+                .ToListAsync();
+            return results;
         }
     }
 }

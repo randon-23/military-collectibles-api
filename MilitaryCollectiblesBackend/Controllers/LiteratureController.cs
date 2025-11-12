@@ -57,7 +57,7 @@ namespace MilitaryCollectiblesBackend.Controllers
         [HttpPost("create-literature")]
         public async Task<ActionResult<ResponseDto<Literature>>> CreateLiterature([FromBody] Literature literature)
         {
-            if (literature.Title.IsNullOrEmpty() || literature.Description.IsNullOrEmpty() || literature.LiteratureType.IsNullOrEmpty() || literature.BindingType.IsNullOrEmpty())
+            if (literature.Title.IsNullOrEmpty() || literature.Description.IsNullOrEmpty() || literature.LiteratureType.LiteratureTypeName.IsNullOrEmpty() || literature.BindingType.BindingTypeName.IsNullOrEmpty())
             {
                 return BadRequest("Title, Description, LiteratureType, and BindingType are required fields and cannot be empty.");
             }
@@ -109,7 +109,7 @@ namespace MilitaryCollectiblesBackend.Controllers
         {
             // Basic validation, similar to create
             if (literature.Title.IsNullOrEmpty() || literature.Description.IsNullOrEmpty() ||
-               literature.LiteratureType.IsNullOrEmpty() || literature.BindingType.IsNullOrEmpty())
+               literature.LiteratureType.LiteratureTypeName.IsNullOrEmpty() || literature.BindingType.BindingTypeName.IsNullOrEmpty())
             {
                 return BadRequest("Title, Description, LiteratureType, and BindingType are required fields and cannot be empty.");
             }

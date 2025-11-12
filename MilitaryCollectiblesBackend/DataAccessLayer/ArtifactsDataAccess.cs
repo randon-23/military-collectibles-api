@@ -1,6 +1,7 @@
-﻿using MilitaryCollectiblesBackend.Data;
+﻿using Microsoft.EntityFrameworkCore;
+using MilitaryCollectiblesBackend.CustomClasses;
+using MilitaryCollectiblesBackend.Data;
 using MilitaryCollectiblesBackend.Models;
-using Microsoft.EntityFrameworkCore;
 
 namespace MilitaryCollectiblesBackend.DataAccessLayer
 {
@@ -23,6 +24,8 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
         Task<List<Artifact>> GetArtifactsByStorageArea(int storageAreaId);
         Task UpdateAssignArtifactToArtifactSeries(int artifactId, int seriesId);
         Task UpdateAssignArtifactToStorageArea(int artifactId, int storageAreaId);
+        Task<List<Artifact>> SearchArtifacts(ArtifactSearchFilterDto filters);
+        Task<List<Artifact>> SimpleSearch(string query);
     }
     public class ArtifactsDataAccess : IArtifactsDataAccess
     {
@@ -103,21 +106,21 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
 
         public async Task<List<Artifact>> GetArtifactByArtifactType(string artifactType) {
             var results = await _dbContext.Artifacts
-                .Where(a => a.ArtifactType.ToLower() == artifactType.ToLower())
+                .Where(a => a.ArtifactType.ArtifactTypeName.ToLower() == artifactType.ToLower())
                 .ToListAsync();
 
             return results;
         }
         public async Task<List<Artifact>> GetArtifactByOrigin(string origin) {
             var results = await _dbContext.Artifacts
-                .Where(a => a.Origin != null && a.Origin.ToLower() == origin.ToLower())
+                .Where(a => a.Origin != null && a.Origin.OriginName.ToLower() == origin.ToLower())
                 .ToListAsync();
 
             return results;
         }
         public async Task<List<Artifact>> GetArtifactByEra(string era) {
             var results = await _dbContext.Artifacts
-                .Where(a => a.Era != null && a.Era.ToLower() == era.ToLower())
+                .Where(a => a.Era != null && a.Era.EraName.ToLower() == era.ToLower())
                 .ToListAsync();
 
             return results;
@@ -186,6 +189,56 @@ namespace MilitaryCollectiblesBackend.DataAccessLayer
             await _dbContext.SaveChangesAsync();
 
             return;
+        }
+
+        public async Task<List<Artifact>> SearchArtifacts(ArtifactSearchFilterDto filters)
+        {
+            var query = _dbContext.Artifacts.AsQueryable();
+
+            if (!string.IsNullOrEmpty(filters.Name))
+            {
+                query = query.Where(a => a.Name.Contains(filters.Name));
+            }
+            if (filters.MinPrice.HasValue)
+            {
+                query = query.Where(a => a.Price >= filters.MinPrice.Value);
+            }
+            if (filters.MaxPrice.HasValue)
+            {
+                query = query.Where(a => a.Price <= filters.MaxPrice.Value);
+            }
+            if (!string.IsNullOrEmpty(filters.ArtifactType))
+            {
+                var typeLower = filters.ArtifactType.ToLower();
+                query = query.Where(a => a.ArtifactType.ArtifactTypeName.ToLower() == typeLower);
+            }
+            if (!string.IsNullOrEmpty(filters.Origin))
+            {
+                var originLower = filters.Origin.ToLower();
+                query = query.Where(a => a.Origin != null && a.Origin.OriginName.ToLower() == originLower);
+            }
+            if (!string.IsNullOrEmpty(filters.Era))
+            {
+                var eraLower = filters.Era.ToLower();
+                query = query.Where(a => a.Era != null && a.Era.EraName.ToLower() == eraLower);
+            }
+
+            return await query.ToListAsync();
+        }
+
+        public async Task<List<Artifact>> SimpleSearch(string query)
+        {
+            if (string.IsNullOrWhiteSpace(query))
+                return new List<Artifact>();
+
+            query = query.ToLower();
+
+            var results = await _dbContext.Artifacts
+                .Where(a => a.Name.ToLower().Contains(query)
+                            //a.Description.ToLower().Contains(query))
+                )
+                .ToListAsync();
+            return results;
         }
     }
 }

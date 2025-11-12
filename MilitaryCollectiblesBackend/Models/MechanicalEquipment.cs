@@ -20,11 +20,10 @@ namespace MilitaryCollectiblesBackend.Models
         public decimal Price { get; set; } = 0.00m;
 
         [Required]
-        [MaxLength(50)]
-        public string MechanicalEquipmentType { get; set; } = string.Empty;
+        public int MechanicalEquipmentTypeId { get; set; }
 
         [MaxLength(50)]
-        public string? CaliberSpec { get; set; }
+        public int? CaliberSpecId { get; set; }
 
         [MaxLength(100)]
         public string? VehicleModel { get; set; }
@@ -32,17 +31,13 @@ namespace MilitaryCollectiblesBackend.Models
         [MaxLength(100)]
         public string? SerialNumber { get; set; }
 
-        [MaxLength(100)]
-        public string? Manufacturer { get; set; }
+        public int? ManufacturerId { get; set; }
 
-        [MaxLength(100)]
-        public string? Era { get; set; }
+        public int? EraId { get; set; }
 
-        [MaxLength(100)]
-        public string? Origin { get; set; }
+        public int? OriginId { get; set; }
 
-        [MaxLength(100)]
-        public string? Material { get; set; }
+        public int? MaterialId { get; set; }
 
         [MaxLength(500)]
         [Required]
@@ -54,5 +49,11 @@ namespace MilitaryCollectiblesBackend.Models
         [MaxLength(200)]
         public int? StorageArea { get; set; }
         public StorageArea? StorageAreaDetails { get; set; }
+        public MechanicalEquipmentType MechanicalEquipmentType { get; set; } = new MechanicalEquipmentType();
+        public CaliberSpec? CaliberSpec { get; set; }
+        public Manufacturer? Manufacturer { get; set; }
+        public Era? Era { get; set; }
+        public Origin? Origin { get; set; }
+        public Material? Material { get; set; }
     }
 }

@@ -56,7 +56,7 @@ namespace MilitaryCollectiblesBackend.Controllers
         [HttpPost("create-equipment")]
         public async Task<ActionResult<List<ResponseDto<Equipment>>>> CreateEquipment([FromBody] Equipment equipment)
         {
-            if(equipment.Name.IsNullOrEmpty() || equipment.Description.IsNullOrEmpty() || equipment.EquipmentType.IsNullOrEmpty())
+            if(equipment.Name.IsNullOrEmpty() || equipment.Description.IsNullOrEmpty() || equipment.EquipmentType.EquipmentTypeName.IsNullOrEmpty())
             {
                 return BadRequest("Name, Description, and EquipmentType are required fields.");
             }
@@ -90,7 +90,7 @@ namespace MilitaryCollectiblesBackend.Controllers
         [HttpPut("update-equipment/{id}")]
         public async Task<ActionResult<ResponseDto<Equipment>>> UpdateEquipment(int id, [FromBody] Equipment equipment)
         {
-            if(equipment.Name.IsNullOrEmpty() || equipment.Description.IsNullOrEmpty() || equipment.EquipmentType.IsNullOrEmpty())
+            if(equipment.Name.IsNullOrEmpty() || equipment.Description.IsNullOrEmpty() || equipment.EquipmentType.EquipmentTypeName.IsNullOrEmpty())
             {
                 return BadRequest("Name, Description, and EquipmentType are required fields.");
             }

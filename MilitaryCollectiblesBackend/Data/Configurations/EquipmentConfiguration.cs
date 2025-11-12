@@ -9,15 +9,36 @@ namespace MilitaryCollectiblesBackend.Data.Configurations
         public void Configure(EntityTypeBuilder<Equipment> builder)
         {
             builder.ToTable("Equipment");
-            builder.ToTable(t => t.HasCheckConstraint(
-                "chk_EquipmentType",
-                "EquipmentType IN ('Uniform', 'Armour', 'Inventory')")
-            );
+            
             builder.HasOne(e => e.StorageAreaDetails)
                 .WithMany(loc => loc.Equipments)
                 .HasForeignKey(e => e.StorageArea)
                 .IsRequired(false)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.SetNull);
+
+            builder.HasOne(e => e.EquipmentType)
+                .WithMany(et => et.Equipments)
+                .HasForeignKey(e => e.EquipmentTypeId)
+                .IsRequired()
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.HasOne(e => e.Era)
+                .WithMany(er => er.Equipments)
+                .HasForeignKey(e => e.EraId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            builder.HasOne(e => e.Origin)
+                .WithMany(o => o.Equipments)
+                .HasForeignKey(e => e.OriginId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            builder.HasOne(e => e.Material)
+                .WithMany(m => m.Equipments)
+                .HasForeignKey(e => e.MaterialId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.SetNull);
         }
     }
 }

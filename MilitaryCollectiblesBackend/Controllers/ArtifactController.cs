@@ -57,7 +57,7 @@ namespace MilitaryCollectiblesBackend.Controllers
         [HttpPost("create-artifact")]
         public async Task<ActionResult<ResponseDto<Artifact>>> CreateArtifact([FromBody] Artifact artifact)
         {
-            if (artifact.Name.IsNullOrEmpty() || artifact.Description.IsNullOrEmpty() || artifact.ArtifactType.IsNullOrEmpty())
+            if (artifact.Name.IsNullOrEmpty() || artifact.Description.IsNullOrEmpty() || artifact.ArtifactType.ArtifactTypeName.IsNullOrEmpty())
             {
                 return BadRequest("Name, Description, and ArtifactType are required fields.");
             }
@@ -91,7 +91,7 @@ namespace MilitaryCollectiblesBackend.Controllers
         [HttpPut("update-artifact/{id}")]
         public async Task<ActionResult<Artifact>> UpdateArtifact(int id, [FromBody] Artifact artifact)
         {
-            if (artifact.Name.IsNullOrEmpty() || artifact.Description.IsNullOrEmpty() || artifact.ArtifactType.IsNullOrEmpty())
+            if (artifact.Name.IsNullOrEmpty() || artifact.Description.IsNullOrEmpty() || artifact.ArtifactType.ArtifactTypeName.IsNullOrEmpty())
             {
                 return BadRequest("Name, Description, and ArtifactType are required fields.");
             }

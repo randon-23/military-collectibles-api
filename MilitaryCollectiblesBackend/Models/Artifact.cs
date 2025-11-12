@@ -20,14 +20,11 @@ namespace MilitaryCollectiblesBackend.Models
         public decimal Price { get; set; } = 0.00m;
 
         [Required]
-        [MaxLength(75)]
-        public string ArtifactType { get; set; } = string.Empty;
+        public int ArtifactTypeId { get; set; }
 
-        [MaxLength(100)]
-        public string? Origin { get; set; }
+        public int? OriginId { get; set; }
 
-        [MaxLength(100)]
-        public string? Era { get; set; }
+        public int? EraId { get; set; }
 
         [Required]
         [MaxLength(500)]
@@ -43,5 +40,8 @@ namespace MilitaryCollectiblesBackend.Models
 
         public StorageArea? StorageAreaDetails { get; set; }
         public ArtifactSeries? ArtifactSeries { get; set; }
+        public ArtifactType ArtifactType { get; set; } = new ArtifactType();
+        public Origin? Origin { get; set; }
+        public Era? Era { get; set; }
     }
 }

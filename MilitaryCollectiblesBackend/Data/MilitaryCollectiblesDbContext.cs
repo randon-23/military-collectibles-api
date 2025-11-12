@@ -1,6 +1,7 @@
 ﻿using Google.Protobuf.WellKnownTypes;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
+using Microsoft.Identity.Client;
 using MilitaryCollectiblesBackend.Data.Configurations;
 using MilitaryCollectiblesBackend.Models;
 
@@ -18,12 +19,26 @@ namespace MilitaryCollectiblesBackend.Data
         public DbSet<Literature> Literatures { get; set; } //DbSet is used to represent a collection of entities in the context of Entity Framework. What is returned (Literatures) is a collection of Literature objects that can be queried or modified.
         public DbSet<Insignia> Insignias { get; set; }
         public DbSet<Artifact> Artifacts { get; set; }
-        public DbSet<Equipment> Equipments  { get; set; }
-        public DbSet<MechanicalEquipment> MechanicalEquipments  { get; set; }
+        public DbSet<Equipment> Equipments { get; set; }
+        public DbSet<MechanicalEquipment> MechanicalEquipments { get; set; }
         public DbSet<LiteratureSeries> QueriedLiteratureSeries { get; set; }
-        public DbSet<ArtifactSeries> QueriedArtifactSeries  { get; set; }
+        public DbSet<ArtifactSeries> QueriedArtifactSeries { get; set; }
         public DbSet<InsigniaSeries> QueriedInsigniaSeries { get; set; }
         public DbSet<StorageArea> StorageAreas { get; set; }
+        public DbSet<ArtifactType> ArtifactTypes { get; set; }
+        public DbSet<EquipmentType> EquipmentTypes { get; set; }
+        public DbSet<InsigniaType> InsigniaTypes { get; set; }
+        public DbSet<LiteratureType> LiteratureTypes { get; set; }
+        public DbSet<BindingType> BindingTypes { get; set; }
+        public DbSet<MechanicalEquipmentType> MechanicalEquipmentTypes { get; set; }
+        public DbSet<Origin> Origins { get; set; }
+        public DbSet<Era> Eras { get; set; }
+        public DbSet<Material> Materials { get; set; }
+        public DbSet<Author> Authors { get; set; }
+        public DbSet<Publisher> Publishers { get; set; }
+        public DbSet<CaliberSpec> CaliberSpecs { get; set; }
+        public DbSet<Manufacturer> Manufacturers { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -41,6 +56,24 @@ namespace MilitaryCollectiblesBackend.Data
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(InsigniaSeriesConfiguration).Assembly);
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(ArtifactSeriesConfiguration).Assembly);
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(StorageAreaConfiguration).Assembly);
+            modelBuilder.ApplyConfigurationsFromAssembly(typeof(ArtifactTypeConfiguration).Assembly);
+            modelBuilder.ApplyConfigurationsFromAssembly(typeof(EquipmentTypeConfiguration).Assembly);
+            modelBuilder.ApplyConfigurationsFromAssembly(typeof(InsigniaTypeConfiguration).Assembly);
+            modelBuilder.ApplyConfigurationsFromAssembly(typeof(LiteratureTypeConfiguration).Assembly);
+            modelBuilder.ApplyConfigurationsFromAssembly(typeof(BindingTypeConfiguration).Assembly);
+            modelBuilder.ApplyConfigurationsFromAssembly(typeof(MechanicalEquipmentTypeConfiguration).Assembly);
+            modelBuilder.ApplyConfigurationsFromAssembly(typeof(OriginConfiguration).Assembly);
+            modelBuilder.ApplyConfigurationsFromAssembly(typeof(EraConfiguration).Assembly);
+            modelBuilder.ApplyConfigurationsFromAssembly(typeof(MaterialConfiguration).Assembly);
+            modelBuilder.ApplyConfigurationsFromAssembly(typeof(AuthorConfiguration).Assembly);
+            modelBuilder.ApplyConfigurationsFromAssembly(typeof(PublisherConfiguration).Assembly);
+            modelBuilder.ApplyConfigurationsFromAssembly(typeof(CaliberSpecConfiguration).Assembly);
+            modelBuilder.ApplyConfigurationsFromAssembly(typeof(ManufacturerConfiguration).Assembly);
+        }
+
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            optionsBuilder.EnableSensitiveDataLogging();
         }
     }
 }

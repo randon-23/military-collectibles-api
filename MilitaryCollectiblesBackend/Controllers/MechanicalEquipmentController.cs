@@ -56,7 +56,7 @@ namespace MilitaryCollectiblesBackend.Controllers
         [HttpGet("create-mech-equipment")]
         public async Task<ActionResult<ResponseDto<MechanicalEquipment>>> CreateMechanicalEquipment([FromBody] MechanicalEquipment mechEquipment)
         {
-            if (mechEquipment.Name.IsNullOrEmpty() || mechEquipment.Description.IsNullOrEmpty() || mechEquipment.MechanicalEquipmentType.IsNullOrEmpty())
+            if (mechEquipment.Name.IsNullOrEmpty() || mechEquipment.Description.IsNullOrEmpty() || mechEquipment.MechanicalEquipmentType.MechanicalEquipmentTypeName.IsNullOrEmpty())
             {
                 return BadRequest("Name, Description, and MechanicalEquipmentType are required fields.");
             }
@@ -92,7 +92,7 @@ namespace MilitaryCollectiblesBackend.Controllers
         [HttpPut("update-mech-equipment/{id}")]
         public async Task<ActionResult<ResponseDto<MechanicalEquipment>>> UpdateMechanicalEquipment(int id, [FromBody] MechanicalEquipment mechEquipment)
         {
-            if (mechEquipment.Name.IsNullOrEmpty() || mechEquipment.Description.IsNullOrEmpty() || mechEquipment.MechanicalEquipmentType.IsNullOrEmpty())
+            if (mechEquipment.Name.IsNullOrEmpty() || mechEquipment.Description.IsNullOrEmpty() || mechEquipment.MechanicalEquipmentType.MechanicalEquipmentTypeName.IsNullOrEmpty())
             {
                 return BadRequest("Name, Description, and MechanicalEquipmentType are required fields.");
             }

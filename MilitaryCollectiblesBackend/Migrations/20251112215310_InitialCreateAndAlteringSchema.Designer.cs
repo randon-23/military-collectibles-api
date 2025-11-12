@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MilitaryCollectiblesBackend.Data;
 
@@ -10,9 +11,11 @@ using MilitaryCollectiblesBackend.Data;
 namespace MilitaryCollectiblesBackend.Migrations
 {
     [DbContext(typeof(MilitaryCollectiblesDbContext))]
-    partial class MilitaryCollectiblesDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251112215310_InitialCreateAndAlteringSchema")]
+    partial class InitialCreateAndAlteringSchema
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

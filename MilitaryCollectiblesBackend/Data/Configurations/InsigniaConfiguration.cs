@@ -9,10 +9,6 @@ namespace MilitaryCollectiblesBackend.Data.Configurations
         public void Configure(EntityTypeBuilder<Insignia> builder)
         {
             builder.ToTable("Insignias");
-            builder.ToTable(t => t.HasCheckConstraint(
-                "chk_InsigniaType",
-                "InsigniaType IN  ('Badge', 'Regimental Badge', 'Lapel Badge', 'Ribbon')")
-            );
 
             builder.HasOne(i => i.InsigniaSeries) // Navigation property for LiteratureSeries
                 .WithMany(s => s.Insignias)
@@ -24,7 +20,31 @@ namespace MilitaryCollectiblesBackend.Data.Configurations
                 .WithMany(loc => loc.Insignias)
                 .HasForeignKey(i => i.StorageArea)
                 .IsRequired(false) // Location is optional
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.SetNull);
+
+            builder.HasOne(i => i.InsigniaType)
+                .WithMany(it => it.Insignias)
+                .HasForeignKey(i => i.InsigniaTypeId)
+                .IsRequired()
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.HasOne(i => i.Era)
+                .WithMany(e => e.Insignias)
+                .HasForeignKey(i => i.EraId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            builder.HasOne(i => i.Origin)
+                .WithMany(o => o.Insignias)
+                .HasForeignKey(i => i.OriginId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            builder.HasOne(i => i.Material)
+                .WithMany(m => m.Insignias)
+                .HasForeignKey(i => i.MaterialId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.SetNull);
         }
     }
 }

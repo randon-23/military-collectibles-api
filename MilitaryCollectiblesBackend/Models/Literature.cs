@@ -19,24 +19,21 @@ namespace MilitaryCollectiblesBackend.Models
         [Column(TypeName = "decimal(10,2)")]
         public decimal Price { get; set; } = 0.00m;
 
-        [MaxLength(200)]
-        public string? Author { get; set; }
+        public int? AuthorId { get; set; }
 
         public int? PublicationYear { get; set; }
 
-        [MaxLength(100)]
-        public string? Publisher { get; set; }
+        public int? PublisherId { get; set; }
+        
 
         [MaxLength(200)]
         public string? ISBN { get; set; }
 
         [Required]
-        [MaxLength(50)]
-        public string LiteratureType { get; set; } = string.Empty;
+        public int LiteratureTypeId { get; set; }
 
         [Required]
-        [MaxLength(50)]
-        public string BindingType { get; set; } = string.Empty;
+        public int BindingTypeId { get; set; }
 
         [Required]
         [MaxLength(500)]
@@ -52,5 +49,9 @@ namespace MilitaryCollectiblesBackend.Models
 
         public StorageArea? StorageAreaDetails { get; set; }
         public LiteratureSeries? LiteratureSeries { get; set; }
+        public Author? Author { get; set; }
+        public Publisher? Publisher { get; set; }
+        public LiteratureType LiteratureType { get; set; } = new LiteratureType();
+        public BindingType BindingType { get; set; } = new BindingType();
     }
 }
